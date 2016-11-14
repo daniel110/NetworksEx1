@@ -1,3 +1,34 @@
+/* 
+Protocol format:
+
+* the first dword of each packet contains the pachet type.
+After the packet type field, every other field contains Length (DWROD) and value fields.
+
+Packet type 1: (1 field) Server sends to the client a string to print to the screen.
+
+Packet type 2: (1 DOWRD) General status.
+    Field1 DWORD: a status.
+    Statuses:
+        1: user name not found.
+        2: password incorrect.
+        3: You are not logged in.
+
+Packet type 3: (2 field) Client asks for login.
+    Field1: a string containing a user name.
+    Field2: a string containing a pssword.
+    (Expecting for packet type 2)
+
+
+Packet type 4: (2 field) Client asks for 
+
+
+
+
+
+*/
+
+
+
 class Packet
 {
     private:
@@ -11,6 +42,9 @@ class Packet
             m_len = 0;
             m_cur = 0;
         }
+
+        bool writeDWordForword(long value);
+        bool readDWordForword(long& output);
 
         unsigned long writeForword(char * buf, unsigned len);
         unsigned long readForword(char * dst, unsigned long len);
