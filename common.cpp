@@ -1,19 +1,20 @@
 class Packet
 {
     private:
-        std::string m_buff;
+        char * m_buff;
         unsigned long m_len;
         unsigned long m_cur;
     public:
         Packet()
         {
+            m_buff = nullptr;
             m_len = 0;
             m_cur = 0;
         }
 
-        unsigned long writeForword(std::string& buf);
-        std::string& readForword(unsigned long);
-        std::string& readLine();
+        unsigned long writeForword(char * buf, unsigned len);
+        unsigned long readForword(char * dst, unsigned long len);
+        unsigned long readLine(char * dst, unsigned long max);
 }
 
 class MailObj
@@ -60,13 +61,13 @@ class Socket
         virtual ~Socket();
         bool create();
 
-        bool bind (const std::string host, const int port );
+        bool bind (const std::string& host, const int port );
         bool listen();
         bool accept ( Socket& ) const;
 
-        bool connect ( const std::string host, const int port );
+        bool connect ( const std::string& host, const int port );
 
-        bool send ( const std::string ) const;
+        bool send ( const std::string& ) const;
         bool send ( const Packet& ) const;
         int recv ( std::string& ) const;
 
