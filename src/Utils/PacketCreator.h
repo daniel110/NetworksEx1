@@ -6,11 +6,11 @@ class PacketCreator
     ************* */
     static Packet& getWelcomePacket();
     static Packet& getShowInboxResponseAsPacket(Inbox& box);
-    /*  null is no mail exists */
-    static Packet& getGetMailResponseAsPacket(MailObj * mail);
+    static Packet& getGetMailResponseAsPacket(MailObj& mail);
     static Packet& getDeleteResponseAsPacket(int state);
     static Packet& getLogingStatePacket(User& user, int state);
     static Packet& getComposeResponseAsPacket(int state);
+    static Packet& getStatusResponseAsPacket(int state);
 
 
     /*  Client
