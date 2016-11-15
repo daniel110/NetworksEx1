@@ -2,6 +2,7 @@
 
 class MailObj
 {
+    /*  We assume all fields contain info */
     unsigned long m_id;
     std::string m_subject;
     std::string m_from;
