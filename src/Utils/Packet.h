@@ -1,34 +1,28 @@
 #pragma once
 
+#include <string>
+#include <stdlib.h>
+
 class Packet
 {
-    private:
-        char * m_buff;
-        unsigned long m_len;
-        unsigned long m_cur;
-    public:
-        Packet()
-        {
-            m_buff = nullptr;
-            m_len = 0;
-            m_cur = 0;
-        }
-
-        bool writeForwordDWord(long value);
-        bool readForwordDWord(long& output);
+private:
+	char * m_buff;
+	unsigned long m_len;
+	unsigned long m_cur;
 
 
-        unsigned long writeForwordStringField(std::string& str)
-        {
-            unsigned long sum = 0;
-            sum += writeForwordDWord(str.size);
-            sum += writeForword(str);
-            return sum;
-        }
 
-        unsigned long writeForword(std::String& str);
+public:
+	Packet();
+	unsigned long writeForwordStringField(std::string& str);
+	unsigned long bytesLeft();
+    unsigned long bytesLeftLine();
+	bool allocateForward(unsigned long more);
+	bool writeForword(const char * buf, unsigned len);
+	unsigned long writeForword(std::string& str);
+	bool writeForwordDWord(long value);
+	bool readForwordDWord(long& output);
+	bool readForword(char * dst, unsigned long len);
+	unsigned long readLine(char * dst, unsigned long max);
 
-        unsigned long writeForword(char * buf, unsigned len);
-        unsigned long readForword(char * dst, unsigned long len);
-        unsigned long readLine(char * dst, unsigned long max);
-}
+};
