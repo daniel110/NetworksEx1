@@ -1,6 +1,6 @@
 Protocol format:
 
-* the first dword of each packet contains the pachet type.
+* the first dword of each packet contains the packet type.
 After the packet type field, every other field contains Length (DWROD) and value fields.
 
 Packet type 1: (1 field) Server sends to the client a string to print to the screen.
@@ -14,7 +14,7 @@ Packet type 2: (1 DOWRD) General status.
 
 Packet type 3: (2 field) Client asks for login.
     Field1: a string containing a user name.
-    Field2: a string containing a pssword.
+    Field2: a string containing a password.
     (Expecting for packet type 2)
 
 
