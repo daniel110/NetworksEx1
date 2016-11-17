@@ -104,7 +104,21 @@
 
     unsigned long Packet::bytesLeftLine()
     {
-        
+		unsigned long old_cur = m_cur;
+		unsigned long left = bytesLeft();
+
+		while (left > 0)
+		{
+            char cur_char = *(m_buff + m_cur);
+            m_cur ++;
+            if (cur_char == '\n')
+            {
+                break;
+            }
+            left -= 1;
+		}
+
+		return (m_cur - old_cur);
     }
 
 	unsigned long Packet::readLine(char * dst, unsigned long max)
@@ -114,14 +128,15 @@
 
 		while (left > 0)
 		{
-				left -= 1;
-				m_cur += 1;
-				dst += 1;
-				*dst = *(m_buff + m_cur);
-				if (*dst == '\n')
-				{
-					break;
-				}
+            char cur_char = *(m_buff + m_cur);
+            *dst = cur_char;
+            m_cur ++;
+            if (cur_char == '\n')
+            {
+                break;
+            }
+            left -= 1;
+            dst += 1;
 		}
 
 		return (m_cur - old_cur);
