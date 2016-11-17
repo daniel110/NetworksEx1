@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 class MailObj
 {
     /*  We assume all fields contain info */
@@ -13,4 +15,4 @@ class MailObj
 
     Packet& getMailasPacket();
     bool setMailAsPacket(Packet& pct);
-}
+};

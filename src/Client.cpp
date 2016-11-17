@@ -1,6 +1,1 @@
-class Client
-{
-
-
-    
-}
+/* client implementation */

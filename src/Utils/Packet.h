@@ -26,3 +26,4 @@ public:
 	unsigned long readLine(char * dst, unsigned long max);
 
 };
+

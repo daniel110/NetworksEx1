@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Packet.h"
+
 class User
 {
     private:
@@ -15,4 +17,4 @@ class User
         bool isPassCorrect(std::string& pass);
 
         std::string& getUserName();
-}
+};

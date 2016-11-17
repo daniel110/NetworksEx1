@@ -1,15 +1,22 @@
 #pragma once
 
+#include <list>
+
+#include "MailObj.h"
+#include "User.h"
+
 class Inbox
 {
     private:
-        std::list<mails*> mails;
+        std::list<MailObj*> mails;
+
         unsigned long idOfLastMail;
     public:
         User& user;
 
-        Inbox(user& usr);
+        Inbox(User& usr);
+
         bool addMail(MailObj * mil);
         bool removeMail(unsigned long id);
         Packet& getShowInboxAsPacket();
-}
+};
