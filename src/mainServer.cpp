@@ -4,7 +4,8 @@
 #include "Server.h"
 
 
-int main (int argc, char ** argv) {
+int main (int argc, char ** argv)
+{
 
 	printf("Hello Server"); /* TODO: remove this line */
 

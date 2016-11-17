@@ -20,4 +20,4 @@ class PacketCreator
     static Packet& getDeleteRequestAsPacket(unsigned long id);
     static Packet& getLoginRequestAsPacket(unsigned long id);
     static Packet& getComposeRequestAsPacket(MailObj& mail);
-}
+};

@@ -1,17 +1,15 @@
 #pragma once
 
-enum StateMachineStep
-{
-    STATE_NON_AUTH,
-    STATE_LOGEDON,
-    STATE_MAILREQ
+#include "Packet.h"
 
-    
-}
+typedef int socket_handle;
+
 
 class Socket
 {
     public:
+		Socket(socket_handle socketfd);
+
         Socket();
         virtual ~Socket();
         bool create();
@@ -26,41 +24,16 @@ class Socket
         bool send ( const Packet& ) const;
         int recv ( std::string& ) const;
 
-        bool validity() const { return m_sock != -1; }
+        bool validity() const { return m_socketfd != -1; }
 
         void close();
 
     private:
 
-        int m_sock;
+        socket_handle m_socketfd;
 
 
-        
         // sockaddr_in m_addr; Should be only for bind and connect ??
-}
-
-class ServerSocketSession : public Socket
-{
-    public:
-        ServerSocketState()
-        {
-            m_state = STATE_NON_AUTH;
-            m_userInbox = nullptr;
-        }
-
-        StateMachineStep getState()
-        {
-            return m_state;
-        }
-        void setState(StateMachineStep value)
-        {
-            m_state = value;
-        }
-
-        void setInbox(Inbox * ibx);
+};
 
 
-    private:
-        StateMachineStep m_state;
-        Inbox * m_userInbox;
-}

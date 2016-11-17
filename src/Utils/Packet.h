@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 class Packet
 {
     private:
@@ -14,21 +16,21 @@ class Packet
             m_cur = 0;
         }
 
-        bool writeForwordDWord(long value);
+        unsigned long writeForwordDWord(long value);
         bool readForwordDWord(long& output);
 
 
         unsigned long writeForwordStringField(std::string& str)
         {
             unsigned long sum = 0;
-            sum += writeForwordDWord(str.size);
+            sum += writeForwordDWord(str.size());
             sum += writeForword(str);
             return sum;
         }
 
-        unsigned long writeForword(std::String& str);
+        unsigned long writeForword(std::string& str);
 
         unsigned long writeForword(char * buf, unsigned len);
         unsigned long readForword(char * dst, unsigned long len);
         unsigned long readLine(char * dst, unsigned long max);
-}
+};
