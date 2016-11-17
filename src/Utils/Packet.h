@@ -25,5 +25,8 @@ public:
 	bool readForword(char * dst, unsigned long len);
 	unsigned long readLine(char * dst, unsigned long max);
 
+	char * getData() const;
+	unsigned long getSize() const;
+
 };
 

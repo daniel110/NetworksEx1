@@ -1,10 +1,17 @@
 #pragma once
 
+#include <string>
+
 #include "Packet.h"
 
 typedef int socket_handle;
 
+#define INVALID_SOCKET_ERROR (-555)
+#define INVALID_IP_ADDRESS (-500)
 
+/***
+ * Socket class is a warpper for socket linux api
+ */
 class Socket
 {
     public:
@@ -12,28 +19,40 @@ class Socket
 
         Socket();
         virtual ~Socket();
-        bool create();
+        int create();
 
-        bool bind (const std::string& host, const int port );
-        bool listen();
-        bool accept ( Socket& ) const;
+        int bind (const std::string& ip, const u_int16_t port );
+        int listen(const unsigned int maxConnections);
+        Socket* accept ( Socket& ) const;
 
-        bool connect ( const std::string& host, const int port );
+        int connect ( const std::string& ip, const u_int16_t port );
 
-        bool send ( const std::string& ) const;
-        bool send ( const Packet& ) const;
-        int recv ( std::string& ) const;
+        int send ( const std::string& str) const;
+        int send ( const Packet& packet) const;
+        int recv ( Packet& packet) const;
 
-        bool validity() const { return m_socketfd != -1; }
+        bool isValid() const;
 
         void close();
 
     private:
 
-        socket_handle m_socketfd;
+    socket_handle m_socketfd;
 
+    bool isSocketOpWorked(int result) const;
 
-        // sockaddr_in m_addr; Should be only for bind and connect ??
+    /**
+     *
+     *
+     * @return
+     *  on success, 0
+     *  on error: A) if INVALID_IP_ADDRESS: ip does not contain a character string
+     *  			representing a valid network address
+     *  		  B) if -1: check errno for specific error
+     */
+    int setSocketAddr(struct sockaddr_in& address,
+    					const std::string& ip,
+    					const u_int16_t port) ;
 };
 
 

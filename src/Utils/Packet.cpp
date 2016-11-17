@@ -1,143 +1,159 @@
+#include <cstring>
+
+#include "Packet.h"
 
 
-	Packet::Packet()
+Packet::Packet()
+{
+	m_buff = nullptr;
+	m_len = 0;
+	m_cur = 0;
+}
+
+
+unsigned long Packet::writeForwordStringField(std::string& str)
+{
+	unsigned long sum = 0;
+	sum += writeForwordDWord(str.size() + 1);
+	sum += writeForword(str);
+	return sum;
+}
+
+unsigned long Packet::bytesLeft()
+{
+	return (m_len - m_cur);
+}
+
+bool Packet::allocateForward(unsigned long more)
+{
+	unsigned long new_total = m_len + more - bytesLeft();
+	if (new_total > m_len)
 	{
-		m_buff = nullptr;
-		m_len = 0;
-		m_cur = 0;
-	}
-
-
-	unsigned long Packet::writeForwordStringField(std::string& str)
-	{
-		unsigned long sum = 0;
-		sum += writeForwordDWord(str.size() + 1);
-		sum += writeForword(str);
-		return sum;
-	}
-
-	unsigned long Packet::bytesLeft()
-	{
-		return (m_len - m_cur);
-	}
-
-	bool Packet::allocateForward(unsigned long more)
-	{
-		unsigned long new_total = m_len + more - bytesLeft();
-		if (new_total > m_len)
+		char * tmp = new char[new_total];
+		if (tmp != nullptr)
 		{
-			char * tmp = new char[new_total];
-			if (tmp != nullptr)
+			if (m_buff != nullptr)
 			{
-				if (m_buff != nullptr)
-				{
-					memcpy(tmp, m_buff, m_len);
-				}
-				memset(tmp + m_len, 0, new_total - m_len);
-				m_len = new_total;
-				delete[] m_buff;
-				m_buff = tmp;
+				memcpy(tmp, m_buff, m_len);
 			}
-			else
-			{
-				return false;
-			}
+			memset(tmp + m_len, 0, new_total - m_len);
+			m_len = new_total;
+			delete[] m_buff;
+			m_buff = tmp;
 		}
+		else
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Packet::writeForword(const char * buf, unsigned len)
+{
+	if (true == allocateForward(len))
+	{
+		memcpy(m_buff + m_cur, buf, len);
+		m_cur += len;
 		return true;
 	}
+	return false;
+}
 
-	bool Packet::writeForword(const char * buf, unsigned len)
+unsigned long Packet::writeForword(std::string& str)
+{
+	return writeForword(str.c_str(), str.size() + 1);
+}
+
+bool Packet::writeForwordDWord(long value)
+{
+	if (true == allocateForward(sizeof(value)))
 	{
-		if (true == allocateForward(len))
-		{
-			memcpy(m_buff + m_cur, buf, len);
-			m_cur += len;
-			return true;
-		}
+		*reinterpret_cast<long*>(m_buff + m_cur) = value;
+		m_cur += sizeof(value);
+		return true;
+	}
+	return false;
+}
+
+
+bool Packet::readForwordDWord(long& output)
+{
+	if (bytesLeft() >= sizeof(long))
+	{
+		output = *reinterpret_cast<long*>(m_buff + m_cur);
+		m_cur += sizeof(long);
+		return true;
+	}
+	else
+	{
 		return false;
 	}
+}
 
-	unsigned long Packet::writeForword(std::string& str)
+bool Packet::readForword(char * dst, unsigned long len)
+{
+	if (bytesLeft() >= len)
 	{
-		return writeForword(str.c_str(), str.size() + 1);
+		memcpy(dst, m_buff + m_cur, len);
+		m_cur += len;
+		return true;
 	}
-	
-	bool Packet::writeForwordDWord(long value)
+	else
 	{
-		if (true == allocateForward(sizeof(value)))
-		{
-			*reinterpret_cast<long*>(m_buff + m_cur) = value;
-			m_cur += sizeof(value);
-			return true;
-		}
 		return false;
 	}
+}
 
+unsigned long Packet::bytesLeftLine()
+{
+	unsigned long old_cur = m_cur;
+	unsigned long left = bytesLeft();
 
-	bool Packet::readForwordDWord(long& output)
+	while (left > 0)
 	{
-		if (bytesLeft() >= sizeof(long))
+		char cur_char = *(m_buff + m_cur);
+		m_cur ++;
+		if (cur_char == '\n')
 		{
-			output = *reinterpret_cast<long*>(m_buff + m_cur);
-			m_cur += sizeof(long);
-			return true;
+			break;
 		}
-		else
-		{
-			return false;
-		}
+		left -= 1;
 	}
 
-	bool Packet::readForword(char * dst, unsigned long len)
+	return (m_cur - old_cur);
+}
+
+unsigned long Packet::readLine(char * dst, unsigned long max)
+{
+	unsigned long old_cur = m_cur;
+	unsigned long left = bytesLeft();
+
+	while (left > 0)
 	{
-		if (bytesLeft() >= len)
+		char cur_char = *(m_buff + m_cur);
+		*dst = cur_char;
+		m_cur ++;
+		if (cur_char == '\n')
 		{
-			memcpy(dst, m_buff + m_cur, len);
-			m_cur += len;
-			return true;
+			break;
 		}
-		else
-		{
-			return false;
-		}
+		left -= 1;
+		dst += 1;
 	}
 
-    unsigned long Packet::bytesLeftLine()
-    {
-		unsigned long old_cur = m_cur;
-		unsigned long left = bytesLeft();
+	return (m_cur - old_cur);
+}
 
-		while (left > 0)
-		{
-            char cur_char = *(m_buff + m_cur);
-            m_cur ++;
-            if (cur_char == '\n')
-            {
-                break;
-            }
-            left -= 1;
-		}
+char* Packet::getData() const
+{
+	char* newBuf = new char[m_len];
+	memcpy(newBuf, m_buff, m_len);
 
-		return (m_cur - old_cur);
-    }
+	return newBuf;
+}
 
-	unsigned long Packet::readLine(char * dst, unsigned long max)
-	{
-		unsigned long old_cur = m_cur;
-		unsigned long left = bytesLeft();
-
-		while (left > 0)
-		{
-            char cur_char = *(m_buff + m_cur);
-            *dst = cur_char;
-            m_cur ++;
-            if (cur_char == '\n')
-            {
-                break;
-            }
-            left -= 1;
-            dst += 1;
-		}
-
-		return (m_cur - old_cur);
-	}
+unsigned long Packet::getSize() const
+{
+	return m_len;
+}
