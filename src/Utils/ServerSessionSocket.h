@@ -17,18 +17,22 @@ enum StateMachineStep
 	STATE_QUIT
 };
 
-class StateSocket : public Socket
+class ServerSessionSocket : public Socket
 {
     public:
-		StateSocket(socket_handle socketFd);
-		StateSocket();
+		ServerSessionSocket(socket_handle socketFd);
+		ServerSessionSocket();
 
         StateMachineStep getState();
         void setState(StateMachineStep value);
 
+        void setInbox(Inbox* inbox);
+        Inbox* getInbox();
+
 
     private:
         StateMachineStep m_state;
+        Inbox* m_inbox;
 
         void initState();
 };

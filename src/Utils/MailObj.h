@@ -16,6 +16,8 @@ public:
     std::string m_body;
 
     MailObj(MailObj& other);
+    MailObj();
+
 
     Packet& getMailasPacket();
     bool setMailAsPacket(Packet& pct);
