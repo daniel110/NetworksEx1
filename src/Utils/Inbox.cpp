@@ -12,7 +12,10 @@ Inbox::Inbox(User& usr) : m_user(usr), m_idOfLastMail(0)
 
 void Inbox::addMail(MailObj* mail)
 {
-	m_mails.push_back(mail);
+	MailObj* copyMail = new MailObj(*mail);
+	copyMail->m_id = ++m_idOfLastMail;
+
+	m_mails.push_back(copyMail);
 }
 
 bool Inbox::removeMail(unsigned long id)
@@ -25,6 +28,8 @@ bool Inbox::removeMail(unsigned long id)
 	{
 		if (id == (*it)->m_id)
 		{
+			delete(*it); /* delete mail */
+
 			m_mails.erase(it);
 			isFound = true;
 			break;

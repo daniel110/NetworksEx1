@@ -30,7 +30,7 @@ class Socket
 
         int send ( const std::string& str) const;
         int send ( const Packet& packet) const;
-        int recv ( Packet& packet) const;
+        int recv ( Packet& packet, unsigned short size) const;
 
         bool isValid() const;
 

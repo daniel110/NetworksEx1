@@ -7,9 +7,7 @@
 #include "Utils/User.h"
 #include "Utils/Inbox.h"
 #include "Utils/MailObj.h"
-#include "Utils/StateSocket.h"
-
-typedef std::pair<StateSocket*,Inbox*> session;
+#include "Utils/ServerSessionSocket.h"
 
 
 class server
@@ -22,7 +20,7 @@ class server
     private:
         Socket listener;
         std::list<Inbox*> m_all_inbox;
-		std::list<session> m_sessions;
+		std::list<ServerSessionSocket*> m_sessions;
 
 
         std::list<User*>& getUsersFromFile(std::string path);
@@ -30,9 +28,9 @@ class server
 
         /* default listening port 6423 */
         void listenLoop();
-        void processRequset(StateSocket * socket);
+        void processRequset(ServerSessionSocket * session);
 
         /*  Creates and adds to the session list */
-        StateSocket * createNewUserStateSocket(socket_handle socketfd);
+        ServerSessionSocket* createNewSessionSocket(socket_handle socketfd);
 };
 
