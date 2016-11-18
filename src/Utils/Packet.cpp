@@ -11,15 +11,30 @@ Packet::Packet()
 }
 
 
-unsigned long Packet::writeForwordStringField(std::string& str)
+bool Packet::writeForwardStringField(const std::string& str)
 {
-	unsigned long sum = 0;
-	sum += writeForwordDWord(str.size() + 1);
-	sum += writeForword(str);
-	return sum;
+	bool res = writeForwordDWord(str.size() + 1);
+	if (res == false)
+	{
+		return false;
+	}
+	res = writeForword(str);
+	return res;
 }
 
-unsigned long Packet::bytesLeft()
+bool Packet::readForwardStringField(std::string& str)
+{
+	long length = 0;
+
+	if ((false == readForwordDWord(length)) || (length <= 0) || (length > MAX_FIELD_LENGTH))
+	{
+		return false;
+	}
+	/* length contains null terminate. assign don't need it */
+	return readForwordString(str, length - 1);
+}
+
+unsigned long Packet::bytesLeft() const
 {
 	return (m_len - m_cur);
 }
@@ -60,7 +75,7 @@ bool Packet::writeForword(const char * buf, unsigned len)
 	return false;
 }
 
-bool Packet::writeForword(std::string& str)
+bool Packet::writeForword(const std::string& str)
 {
 	return writeForword(str.c_str(), str.size() + 1);
 }
@@ -105,15 +120,16 @@ bool Packet::readForword(char * dst, unsigned long len)
 	}
 }
 
-unsigned long Packet::bytesLeftLine()
+unsigned long Packet::bytesLeftLine() const
 {
+	unsigned long cur = m_cur;
 	unsigned long old_cur = m_cur;
 	unsigned long left = bytesLeft();
 
 	while (left > 0)
 	{
-		char cur_char = *(m_buff + m_cur);
-		m_cur ++;
+		char cur_char = *(m_buff + cur);
+		cur ++;
 		if (cur_char == '\n')
 		{
 			break;
@@ -121,7 +137,18 @@ unsigned long Packet::bytesLeftLine()
 		left -= 1;
 	}
 
-	return (m_cur - old_cur);
+	return (cur - old_cur);
+}
+
+bool Packet::readForwordString(std::string& out, unsigned long length)
+{
+	if (bytesLeft() < length)
+	{
+		return false;
+	}
+
+	out.assign(m_buff + m_cur, length);
+	return true;
 }
 
 unsigned long Packet::readLine(char * dst, unsigned long max)

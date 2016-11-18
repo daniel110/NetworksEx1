@@ -15,10 +15,10 @@ class User
         User(std::string& userName, std::string& pass);
         User(const User& user);
 
-        Packet& getUserAsPacket();
+        bool getUserAsPacket(Packet& pckt);
         bool setUserFromPacket(Packet& pct);
 
-        bool isPassCorrect(std::string& pass);
+        bool isPassCorrect(std::string& pass) const;
 
-        std::string& getUserName();
+        const std::string& getUserName() const;
 };

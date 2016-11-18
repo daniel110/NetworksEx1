@@ -7,7 +7,6 @@
 class MailObj
 {
 public:
-
     /*  We assume all fields contain info */
     unsigned int m_id;
     std::string m_subject;
@@ -19,6 +18,6 @@ public:
     MailObj();
 
 
-    Packet& getMailasPacket();
+    bool getMailasPacket(Packet& pct) const;
     bool setMailAsPacket(Packet& pct);
 };

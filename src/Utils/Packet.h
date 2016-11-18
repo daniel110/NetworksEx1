@@ -13,16 +13,21 @@ private:
 
 
 public:
+	const long MAX_FIELD_LENGTH = 1024;
+
 	Packet();
-	unsigned long writeForwordStringField(std::string& str);
-	unsigned long bytesLeft();
-    unsigned long bytesLeftLine();
+	bool writeForwardStringField(const std::string& str);
+	bool readForwardStringField(std::string& str);
+	unsigned long bytesLeft() const;
+    unsigned long bytesLeftLine() const;
 	bool allocateForward(unsigned long more);
 	bool writeForword(const char * buf, unsigned len);
-	bool writeForword(std::string& str);
+	bool writeForword(const std::string& str);
 	bool writeForwordDWord(long value);
 	bool readForwordDWord(long& output);
 	bool readForword(char * dst, unsigned long len);
+	bool readForwordString(std::string& out, unsigned long length);
+
 	unsigned long readLine(char * dst, unsigned long max);
 
 	char * getData() const;
