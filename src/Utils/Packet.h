@@ -19,7 +19,7 @@ public:
     unsigned long bytesLeftLine();
 	bool allocateForward(unsigned long more);
 	bool writeForword(const char * buf, unsigned len);
-	unsigned long writeForword(std::string& str);
+	bool writeForword(std::string& str);
 	bool writeForwordDWord(long value);
 	bool readForwordDWord(long& output);
 	bool readForword(char * dst, unsigned long len);

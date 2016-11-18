@@ -60,7 +60,7 @@ bool Packet::writeForword(const char * buf, unsigned len)
 	return false;
 }
 
-unsigned long Packet::writeForword(std::string& str)
+bool Packet::writeForword(std::string& str)
 {
 	return writeForword(str.c_str(), str.size() + 1);
 }
