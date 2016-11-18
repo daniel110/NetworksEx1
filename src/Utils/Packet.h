@@ -21,12 +21,12 @@ public:
 	unsigned long bytesLeft() const;
     unsigned long bytesLeftLine() const;
 	bool allocateForward(unsigned long more);
-	bool writeForword(const char * buf, unsigned len);
-	bool writeForword(const std::string& str);
-	bool writeForwordDWord(long value);
-	bool readForwordDWord(long& output);
-	bool readForword(char * dst, unsigned long len);
-	bool readForwordString(std::string& out, unsigned long length);
+	bool writeForward(const char * buf, unsigned len);
+	bool writeForward(const std::string& str);
+	bool writeForwardDWord(long value);
+	bool readForwardDWord(long& output);
+	bool readForward(char * dst, unsigned long len);
+	bool readForwardString(std::string& out, unsigned long length);
 
 	unsigned long readLine(char * dst, unsigned long max);
 

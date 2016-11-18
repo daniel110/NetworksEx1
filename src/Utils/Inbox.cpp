@@ -3,7 +3,7 @@
 
 #define SHOW_INBOX_MAIL_INFO_DELIMITER (" ")
 #define SHOW_INBOX_MAIL_SUBJECT_WRAPPER ("\"")
-
+#define SHOW_INBOX_MAIL_SUBJECT_NEWLINE ("\n")
 
 Inbox::Inbox(User& usr) : m_user(usr), m_idOfLastMail(0)
 {
@@ -46,13 +46,13 @@ int Inbox::setShowInboxMails(Packet& showInboxPacket)
 			it++)
 	{
 		std::string mailRaw(fromMailToShowInboxRaw(*it));
-		showInboxPacket.writeForword(mailRaw);
+		showInboxPacket.writeForwardStringField(mailRaw);
 	}
 
 	return result;
 }
 
-User Inbox::getUser()
+const User& Inbox::getUser()
 {
 	return m_user;
 }
@@ -71,7 +71,8 @@ std::string Inbox::fromMailToShowInboxRaw(const MailObj* mail)
 
 					SHOW_INBOX_MAIL_SUBJECT_WRAPPER +
 					mail->m_subject +
-					SHOW_INBOX_MAIL_SUBJECT_WRAPPER;
+					SHOW_INBOX_MAIL_SUBJECT_WRAPPER +
+					SHOW_INBOX_MAIL_SUBJECT_NEWLINE;
 
 
 	return showInboxRaw;

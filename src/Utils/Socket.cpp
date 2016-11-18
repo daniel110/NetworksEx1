@@ -9,7 +9,6 @@
 #include "Socket.h"
 #include "Packet.h"
 
-#define RECEIVE_MAX_BUF_SIZE (1024)
 
 Socket::Socket(socket_handle socketfd) : m_socketfd(socketfd)
 {
@@ -42,7 +41,7 @@ int Socket::bind(const std::string& ip, const u_int16_t port )
 {
 	if (!isValid())
 	{
-		return INVALID_SOCKET_ERROR;
+		return RES_INVALID_SOCKET_ERROR;
 	}
 
 	struct sockaddr_in localAddress;
@@ -63,7 +62,7 @@ int Socket::listen(const unsigned int maxConnections)
 {
 	if (!isValid())
 	{
-		return INVALID_SOCKET_ERROR;
+		return RES_INVALID_SOCKET_ERROR;
 	}
 
 	int result = ::listen(m_socketfd, maxConnections);
@@ -96,7 +95,7 @@ int Socket::connect( const std::string& ip, const u_int16_t port )
 {
 	if (!isValid())
 	{
-		return INVALID_SOCKET_ERROR;
+		return RES_INVALID_SOCKET_ERROR;
 	}
 
 	struct sockaddr_in remoteAddress;
@@ -113,7 +112,7 @@ int Socket::connect(struct in_addr& sinAddress, const u_int16_t port )
 {
 	if (!isValid())
 	{
-		return INVALID_SOCKET_ERROR;
+		return RES_INVALID_SOCKET_ERROR;
 	}
 
 	struct sockaddr_in remoteAddress;
@@ -138,7 +137,7 @@ int Socket::send( const std::string& str) const
 {
 	if (!isValid())
 	{
-		return INVALID_SOCKET_ERROR;
+		return RES_INVALID_SOCKET_ERROR;
 	}
 
 	int result = ::write(m_socketfd,
@@ -152,7 +151,7 @@ int Socket::send(const Packet& packet) const
 {
 	if (!isValid())
 	{
-		return INVALID_SOCKET_ERROR;
+		return RES_INVALID_SOCKET_ERROR;
 	}
 
 	int result = ::send(m_socketfd,
@@ -167,7 +166,11 @@ int Socket::recv(Packet& packet, unsigned short size) const
 {
 	if (!isValid())
 	{
-		return INVALID_SOCKET_ERROR;
+		return RES_INVALID_SOCKET_ERROR;
+	}
+	if (size > RECEIVE_MAX_BUF_SIZE)
+	{
+		return RES_INVALID_SOCKET_ERROR;
 	}
 
 	char* buf = new char[size];
@@ -178,7 +181,7 @@ int Socket::recv(Packet& packet, unsigned short size) const
 
 	if (0 <= size)
 	{
-		packet.writeForword(buf, readSize);
+		packet.writeForward(buf, readSize);
 	}
 
 	delete[] buf;
@@ -211,7 +214,7 @@ int Socket::setSocketAddr(struct sockaddr_in& address,
 
 	if (1 != ret)
 	{
-		return INVALID_IP_ADDRESS;
+		return RES_INVALID_IP_ADDRESS;
 	}
 
 	return 0;

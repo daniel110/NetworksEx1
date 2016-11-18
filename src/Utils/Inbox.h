@@ -14,7 +14,7 @@ class Inbox
         bool removeMail(unsigned long id);
         int setShowInboxMails(Packet& showInboxPacket);
 
-        User getUser();
+        const User& getUser();
 
     private:
         User& m_user;

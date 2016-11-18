@@ -13,12 +13,12 @@ Packet::Packet()
 
 bool Packet::writeForwardStringField(const std::string& str)
 {
-	bool res = writeForwordDWord(str.size() + 1);
+	bool res = writeForwardDWord(str.size() + 1);
 	if (res == false)
 	{
 		return false;
 	}
-	res = writeForword(str);
+	res = writeForward(str);
 	return res;
 }
 
@@ -26,12 +26,12 @@ bool Packet::readForwardStringField(std::string& str)
 {
 	long length = 0;
 
-	if ((false == readForwordDWord(length)) || (length <= 0) || (length > MAX_FIELD_LENGTH))
+	if ((false == readForwardDWord(length)) || (length <= 0) || (length > MAX_FIELD_LENGTH))
 	{
 		return false;
 	}
 	/* length contains null terminate. assign don't need it */
-	return readForwordString(str, length - 1);
+	return readForwardString(str, length - 1);
 }
 
 unsigned long Packet::bytesLeft() const
@@ -64,7 +64,7 @@ bool Packet::allocateForward(unsigned long more)
 	return true;
 }
 
-bool Packet::writeForword(const char * buf, unsigned len)
+bool Packet::writeForward(const char * buf, unsigned len)
 {
 	if (true == allocateForward(len))
 	{
@@ -75,12 +75,12 @@ bool Packet::writeForword(const char * buf, unsigned len)
 	return false;
 }
 
-bool Packet::writeForword(const std::string& str)
+bool Packet::writeForward(const std::string& str)
 {
-	return writeForword(str.c_str(), str.size() + 1);
+	return writeForward(str.c_str(), str.size() + 1);
 }
 
-bool Packet::writeForwordDWord(long value)
+bool Packet::writeForwardDWord(long value)
 {
 	if (true == allocateForward(sizeof(value)))
 	{
@@ -92,7 +92,7 @@ bool Packet::writeForwordDWord(long value)
 }
 
 
-bool Packet::readForwordDWord(long& output)
+bool Packet::readForwardDWord(long& output)
 {
 	if (bytesLeft() >= sizeof(long))
 	{
@@ -106,7 +106,7 @@ bool Packet::readForwordDWord(long& output)
 	}
 }
 
-bool Packet::readForword(char * dst, unsigned long len)
+bool Packet::readForward(char * dst, unsigned long len)
 {
 	if (bytesLeft() >= len)
 	{
@@ -140,7 +140,7 @@ unsigned long Packet::bytesLeftLine() const
 	return (cur - old_cur);
 }
 
-bool Packet::readForwordString(std::string& out, unsigned long length)
+bool Packet::readForwardString(std::string& out, unsigned long length)
 {
 	if (bytesLeft() < length)
 	{

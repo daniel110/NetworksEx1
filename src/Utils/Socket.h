@@ -6,15 +6,18 @@
 
 typedef int socket_handle;
 
-#define INVALID_SOCKET_ERROR (-555)
-#define INVALID_IP_ADDRESS (-500)
-
 /***
  * Socket class is a warpper for socket linux api
  */
 class Socket
 {
     public:
+		const int RECEIVE_MAX_BUF_SIZE = 1024;
+
+		const int RES_INVALID_SOCKET_ERROR = -555;
+		const int RES_INVALID_IP_ADDRESS = -500;
+		const int RES_INVALID_ARG_SIZE = -505;
+
 		Socket(socket_handle socketfd);
 
         Socket();
