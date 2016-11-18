@@ -4,34 +4,35 @@
 #include <vector>
 #include <string>
 
-#include "Utils/ServerSocketSession.h"
 #include "Utils/User.h"
 #include "Utils/Inbox.h"
 #include "Utils/MailObj.h"
+#include "Utils/StateSocket.h"
+
+typedef std::pair<StateSocket*,Inbox*> session;
 
 
 class server
 {
-    private:
-		std::list<ServerSocketSession*> m_sessions;
+    public:
+        std::list<MailObj*>& getMailsBySender(std::string& userName);
+        std::list<MailObj*>& getMailsByReceiver(std::string& userName);
 
+
+    private:
         Socket listener;
         std::list<Inbox*> m_all_inbox;
+		std::list<session> m_sessions;
 
-    public:
-        std::list<MailObj>& getMailsBySender(char * name, unsigned long len);
-        std::list<MailObj>& getMailsByReceiver(char * name, unsigned long len);
 
-        std::list<User&> getUserFromFile(std::string path);
+        std::list<User*>& getUsersFromFile(std::string path);
+        void createInboxes(std::list<User*>& users);
 
-        void ListenLoop();
+        /* default listening port 6423 */
+        void listenLoop();
+        void processRequset(StateSocket * socket);
 
         /*  Creates and adds to the session list */
-        ServerSocketSession * createNewSession(socket_handle socketfd);
-
-        ServerSocketSession * getSessionFromSocket(int socketfd);
-
-        void ProcessSocket(ServerSocketSession * socket);
-
+        StateSocket * createNewUserStateSocket(socket_handle socketfd);
 };
 

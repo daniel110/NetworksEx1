@@ -7,16 +7,20 @@
 
 class Inbox
 {
-    private:
-        std::list<MailObj*> mails;
-
-        unsigned long idOfLastMail;
     public:
-        User& user;
-
         Inbox(User& usr);
 
-        bool addMail(MailObj * mil);
+        void addMail(MailObj* mail);
         bool removeMail(unsigned long id);
-        Packet& getShowInboxAsPacket();
+        int setShowInboxMails(Packet& showInboxPacket);
+
+        User getUser();
+
+    private:
+        User& m_user;
+        std::list<MailObj*> m_mails;
+        unsigned long m_idOfLastMail;
+
+        std::string fromMailToShowInboxRaw(const MailObj* mail);
+
 };

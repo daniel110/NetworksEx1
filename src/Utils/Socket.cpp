@@ -106,6 +106,26 @@ int Socket::connect( const std::string& ip, const u_int16_t port )
 		return ret;
 	}
 
+	return innerConnect(remoteAddress);
+}
+
+int Socket::connect(struct in_addr& sinAddress, const u_int16_t port )
+{
+	if (!isValid())
+	{
+		return INVALID_SOCKET_ERROR;
+	}
+
+	struct sockaddr_in remoteAddress;
+	remoteAddress.sin_family = AF_INET;
+	remoteAddress.sin_port = htons(port);
+	remoteAddress.sin_addr = sinAddress;
+
+	return innerConnect(remoteAddress);
+}
+
+int Socket::innerConnect(struct sockaddr_in& remoteAddress)
+{
 	int result = ::connect(m_socketfd,
 							(sockaddr *) &remoteAddress,
 							sizeof(remoteAddress));
@@ -185,16 +205,11 @@ int Socket::setSocketAddr(struct sockaddr_in& address,
 	address.sin_family = AF_INET;
 	address.sin_port = htons(port);
 
-	int ret =  inet_pton(AF_INET, ip.c_str(), &(address.sin_addr));
+	int ret =  inet_aton(ip.c_str(), &(address.sin_addr));
 
 	if (1 != ret)
 	{
-		if (0 == ret)
-		{
-			return INVALID_IP_ADDRESS;
-		}
-
-		return -1;
+		return INVALID_IP_ADDRESS;
 	}
 
 	return 0;

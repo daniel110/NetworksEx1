@@ -1,11 +1,15 @@
 #pragma once
 
+#include <string>
 
+#include "Packet.h"
 
 class MailObj
 {
+public:
+
     /*  We assume all fields contain info */
-    unsigned long m_id;
+    unsigned int m_id;
     std::string m_subject;
     std::string m_from;
     std::string m_to;

@@ -21,11 +21,12 @@ class Socket
         virtual ~Socket();
         int create();
 
-        int bind (const std::string& ip, const u_int16_t port );
+        int bind (const std::string& ip, const u_int16_t port);
         int listen(const unsigned int maxConnections);
         Socket* accept ( Socket& ) const;
 
-        int connect ( const std::string& ip, const u_int16_t port );
+        int connect(const std::string& ip, const u_int16_t port);
+        int connect(struct in_addr& sinAddress, const u_int16_t port);
 
         int send ( const std::string& str) const;
         int send ( const Packet& packet) const;
@@ -39,16 +40,19 @@ class Socket
 
     socket_handle m_socketfd;
 
+
+    int innerConnect(struct sockaddr_in& remoteAddress);
+
     bool isSocketOpWorked(int result) const;
 
     /**
      *
      *
      * @return
-     *  on success, 0
-     *  on error: A) if INVALID_IP_ADDRESS: ip does not contain a character string
+     *  on success: 0
+     *  on error: INVALID_IP_ADDRESS -
+     *  			ip does not contain a character string
      *  			representing a valid network address
-     *  		  B) if -1: check errno for specific error
      */
     int setSocketAddr(struct sockaddr_in& address,
     					const std::string& ip,
