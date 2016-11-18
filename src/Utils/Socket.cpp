@@ -163,23 +163,25 @@ int Socket::send(const Packet& packet) const
 	return result;
 }
 
-int Socket::recv(Packet& packet) const
+int Socket::recv(Packet& packet, unsigned short size) const
 {
 	if (!isValid())
 	{
 		return INVALID_SOCKET_ERROR;
 	}
 
-	char buf[RECEIVE_MAX_BUF_SIZE];
-	int size = ::recv(m_socketfd,
+	char* buf = new char[size];
+	int readSize = ::recv(m_socketfd,
 							(void *)buf,
-							RECEIVE_MAX_BUF_SIZE,
+							size,
 							0);
 
 	if (0 <= size)
 	{
-		packet.writeForword(buf, size);
+		packet.writeForword(buf, readSize);
 	}
+
+	delete[] buf;
 
 	return size;
 }
