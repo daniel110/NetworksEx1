@@ -12,14 +12,14 @@ typedef int socket_handle;
 class Socket
 {
     public:
-		const int RECEIVE_MAX_BUF_SIZE = 1024;
+		static const int RES_SUCCESS = 0;
+		static const int RES_ALLOCATION_FAILED = -100;
+		static const int RES_INVALID_IP_ADDRESS = -500;
+		static const int RES_INVALID_SOCKET_ERROR = -555;
+		static const int RES_ACCEPT_INVALID_SOCKET_ERROR = -556;
 
-		const int RES_SUCCESS = 0;
-		const int RES_INVALID_SOCKET_ERROR = -555;
-		const int RES_INVALID_IP_ADDRESS = -500;
-		const int RES_INVALID_ARG_SIZE = -505;
+		static const std::string ANY_IP;
 
-		const std::string ANY_IP = "0.0.0.0";
 
 		Socket(socket_handle socketfd);
 
@@ -29,7 +29,7 @@ class Socket
 
         int bind (const std::string& ip, const u_int16_t port);
         int listen(const unsigned int maxConnections);
-        Socket* accept ( Socket& ) const;
+        int accept( Socket& clientSocket) const;
 
         int connect(const std::string& ip, const u_int16_t port);
         int connect(struct in_addr& sinAddress, const u_int16_t port);
@@ -43,26 +43,31 @@ class Socket
         void close();
 
     private:
+        static const int SOCKET_INVALID_DEFAULT = -1;
 
-    socket_handle m_socketfd;
+		socket_handle m_socketfd;
 
 
-    int innerConnect(struct sockaddr_in& remoteAddress);
+		int innerConnect(struct sockaddr_in& remoteAddress);
 
-    bool isSocketOpWorked(int result) const;
+		bool isSocketOpWorked(int result) const;
 
-    /**
-     *
-     *
-     * @return
-     *  on success: 0
-     *  on error: INVALID_IP_ADDRESS -
-     *  			ip does not contain a character string
-     *  			representing a valid network address
-     */
-    int setSocketAddr(struct sockaddr_in& address,
-    					const std::string& ip,
-    					const u_int16_t port) ;
+		/**
+		 *
+		 *
+		 * @return
+		 *  on success: RES_SUCCESS
+		 *  on error: RES_INVALID_IP_ADDRESS -
+		 *  			ip does not contain a character string
+		 *  			representing a valid network address
+		 */
+		int setSocketAddr(struct sockaddr_in& address,
+							const std::string& ip,
+							const u_int16_t port) ;
+
+
+		void setSocket(socket_handle socketfd);
+
 };
 
 

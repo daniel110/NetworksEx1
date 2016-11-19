@@ -9,15 +9,17 @@
 #include "Socket.h"
 #include "Packet.h"
 
+const std::string Socket::ANY_IP= "0.0.0.0";
+
 
 Socket::Socket(socket_handle socketfd) : m_socketfd(socketfd)
 {
 	/* empty */
 }
 
-Socket::Socket() : m_socketfd(-1)
+Socket::Socket() : m_socketfd(SOCKET_INVALID_DEFAULT)
 {
-	/* empty */
+
 }
 
 Socket::~Socket()
@@ -31,10 +33,10 @@ int Socket::create()
 
 	if (0 > m_socketfd)
 	{
-		return -1;
+		return RES_INVALID_SOCKET_ERROR;
 	}
 
-	return 0;
+	return RES_SUCCESS;
 }
 
 int Socket::bind(const std::string& ip, const u_int16_t port )
@@ -70,11 +72,11 @@ int Socket::listen(const unsigned int maxConnections)
 	return result;
 }
 
-Socket* Socket::accept( Socket& ) const
+int Socket::accept( Socket& clientSocket) const
 {
 	if (!isValid())
 	{
-		return NULL;
+		return RES_INVALID_SOCKET_ERROR;
 	}
 
 	struct sockaddr_in cliAddress;
@@ -85,10 +87,12 @@ Socket* Socket::accept( Socket& ) const
 									&cliAddLen);
 	if (-1 == clientFd)
 	{
-		return NULL;
+		return RES_ACCEPT_INVALID_SOCKET_ERROR;
 	}
 
-	return new Socket(clientFd);
+	clientSocket.setSocket(clientFd);
+
+	return RES_SUCCESS;
 }
 
 int Socket::connect( const std::string& ip, const u_int16_t port )
@@ -168,12 +172,17 @@ int Socket::recv(Packet& packet, unsigned short size) const
 	{
 		return RES_INVALID_SOCKET_ERROR;
 	}
-	if (size > RECEIVE_MAX_BUF_SIZE)
+
+	char* buf = NULL;
+	try
 	{
-		return RES_INVALID_SOCKET_ERROR;
+		buf = new char[size];
+	}
+	catch(std::bad_alloc& e)
+	{
+		return RES_ALLOCATION_FAILED;
 	}
 
-	char* buf = new char[size];
 	int readSize = ::recv(m_socketfd,
 							(void *)buf,
 							size,
@@ -191,7 +200,7 @@ int Socket::recv(Packet& packet, unsigned short size) const
 
 bool Socket::isValid() const
 {
-	return (0 > m_socketfd);
+	return (0 <= m_socketfd);
 }
 
 void Socket::close()
@@ -199,7 +208,7 @@ void Socket::close()
 	if (this->isValid())
 	{
 		::close(m_socketfd);
-		m_socketfd = -1;
+		m_socketfd = SOCKET_INVALID_DEFAULT;
 	}
 }
 
@@ -210,12 +219,18 @@ int Socket::setSocketAddr(struct sockaddr_in& address,
 	address.sin_family = AF_INET;
 	address.sin_port = htons(port);
 
-	int ret =  inet_aton(ip.c_str(), &(address.sin_addr));
-
+	int ret = inet_aton(ip.c_str(), &(address.sin_addr));
 	if (1 != ret)
 	{
 		return RES_INVALID_IP_ADDRESS;
 	}
 
 	return RES_SUCCESS;
+}
+
+
+void Socket::setSocket(socket_handle socketfd)
+{
+	close();
+	m_socketfd = socketfd;
 }
