@@ -1,6 +1,12 @@
 #include "User.h"
 
 
+User::User(	std::string& userName,
+			std::string& pass)
+{
+	this->init(m_userName, m_pass);
+}
+
 User::User(const User& user)
 {
 	this->init(user.m_userName, user.m_pass);

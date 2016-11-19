@@ -14,9 +14,12 @@ class Socket
     public:
 		const int RECEIVE_MAX_BUF_SIZE = 1024;
 
+		const int RES_SUCCESS = 0;
 		const int RES_INVALID_SOCKET_ERROR = -555;
 		const int RES_INVALID_IP_ADDRESS = -500;
 		const int RES_INVALID_ARG_SIZE = -505;
+
+		const std::string ANY_IP = "0.0.0.0";
 
 		Socket(socket_handle socketfd);
 

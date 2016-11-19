@@ -1,8 +1,7 @@
 #pragma once
 
 #include <list>
-#include <vector>
-#include <string>
+#include <string.h>
 
 #include "Utils/User.h"
 #include "Utils/Inbox.h"
@@ -13,8 +12,19 @@
 class server
 {
     public:
-        std::list<MailObj*>& getMailsBySender(std::string& userName);
+
+
+		/*	From instructions */
+        const long DEFAULT_LISTENING_PORT = 6423;
+
+		std::list<MailObj*>& getMailsBySender(std::string& userName);
         std::list<MailObj*>& getMailsByReceiver(std::string& userName);
+
+        server();
+
+        bool loadUsersFromFile(char * filePath);
+        void startListenLoop(const u_int16_t port);
+
 
 
     private:
@@ -22,13 +32,14 @@ class server
         std::list<Inbox*> m_all_inbox;
 		std::list<ServerSessionSocket*> m_sessions;
 
+		User * getUserFromLine(char * buf, int size);
+		std::list<User*> * getUsersFromFile(char * filePatch);
+        void createInboxList(std::list<User*>& users);
 
-        std::list<User*>& getUsersFromFile(std::string path);
-        void createInboxes(std::list<User*>& users);
-
-        /* default listening port 6423 */
-        void listenLoop();
         void processRequset(ServerSessionSocket * session);
+
+        void clearInboxList();
+        void clearSessionList();
 
         /*  Creates and adds to the session list */
         ServerSessionSocket* createNewSessionSocket(socket_handle socketfd);

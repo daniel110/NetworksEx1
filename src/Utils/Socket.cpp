@@ -217,5 +217,5 @@ int Socket::setSocketAddr(struct sockaddr_in& address,
 		return RES_INVALID_IP_ADDRESS;
 	}
 
-	return 0;
+	return RES_SUCCESS;
 }

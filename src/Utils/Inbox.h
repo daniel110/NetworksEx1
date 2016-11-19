@@ -9,6 +9,7 @@ class Inbox
 {
     public:
         Inbox(User& usr);
+        ~Inbox();
 
         void addMail(MailObj* mail);
         bool removeMail(unsigned long id);

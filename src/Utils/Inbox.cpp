@@ -78,4 +78,16 @@ std::string Inbox::fromMailToShowInboxRaw(const MailObj* mail)
 	return showInboxRaw;
 }
 
+Inbox::~Inbox()
+{
+	MailObj * cur_mail = nullptr;
 
+	while (m_mails.empty() == false)
+	{
+		cur_mail = m_mails.back();
+
+		delete cur_mail;
+
+		m_mails.pop_back();
+	}
+}
