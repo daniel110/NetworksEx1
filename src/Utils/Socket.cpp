@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <new>
+#include <string.h>
 
 #include "Socket.h"
 #include "Packet.h"
@@ -144,18 +145,34 @@ int Socket::innerConnect(struct sockaddr_in& remoteAddress)
 }
 
 
-int Socket::send( const std::string& str) const
+int Socket::sendAll(const char* buf, long size) const
 {
 	if (!isValid())
 	{
 		return RES_INVALID_SOCKET_ERROR;
 	}
 
-	int result = ::write(m_socketfd,
-						(void*) str.c_str(),
-						str.size());
+	int total = 0;
+	int bytesLeft = size;
+	int readBytesCount;
 
-	return result;
+	while(total < size)
+	{
+		readBytesCount = ::send(m_socketfd,
+						(void*) buf+total,
+						(unsigned int) bytesLeft,
+						0);
+
+		if(-1 == readBytesCount)
+		{
+			break;
+		}
+
+		total += readBytesCount;
+		bytesLeft -= readBytesCount;
+	}
+
+	return readBytesCount;
 }
 
 int Socket::send(const Packet& packet) const
@@ -165,12 +182,7 @@ int Socket::send(const Packet& packet) const
 		return RES_INVALID_SOCKET_ERROR;
 	}
 
-	int result = ::send(m_socketfd,
-						(void*) packet.getData(),
-						(unsigned int) packet.getSize(),
-						0);
-
-	return result;
+	return sendAll(packet.getData(), packet.getSize());
 }
 
 int Socket::recv(Packet& packet, unsigned short size) const
@@ -191,14 +203,68 @@ int Socket::recv(Packet& packet, unsigned short size) const
 							size,
 							0);
 
-	if (0 <= size)
+	if (size != readSize)
 	{
-		packet.writeForward(buf, readSize);
+		delete[] buf;
+		return RES_FAILED_RECEIVING_ALL_DATA;
+
 	}
+
+	bool writeRes = packet.writeForward(buf, readSize);
+	delete[] buf;
+
+	if (false == writeRes)
+	{
+		return RES_ALLOCATION_FAILED;
+	}
+
+	packet.jumptoStart();
+	return RES_SUCCESS;
+}
+
+int Socket::recvMessage(Packet& packet) const
+{
+	if (!isValid())
+	{
+		return RES_INVALID_SOCKET_ERROR;
+	}
+
+	int sizeOfPacketLen = sizeof(long);
+
+	char* buf = new (std::nothrow) char[sizeOfPacketLen];
+	if (0 == buf)
+	{
+		return RES_ALLOCATION_FAILED;
+	}
+
+	int readSize = ::recv(m_socketfd,
+							(void *)buf,
+							sizeOfPacketLen,
+							0);
+
+	if (readSize != sizeOfPacketLen)
+	{
+		delete[] buf;
+		return RES_BAD_MESSAGE_FORMAT;
+	}
+
+	long messageSize;
+	memcpy(&messageSize, buf, sizeOfPacketLen);
 
 	delete[] buf;
 
-	return size;
+	return recv(packet, messageSize);
+}
+
+int Socket::sendMessage(const Packet& packet) const
+{
+	long packetSize = packet.getSize();
+	if (packetSize != sendAll((char*)&packetSize , sizeof(long)))
+	{
+		return RES_FAILED_SENDING_ALL_DATA;
+	}
+
+	return send(packet);
 }
 
 bool Socket::isValid() const

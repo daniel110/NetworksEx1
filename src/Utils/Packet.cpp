@@ -10,6 +10,14 @@ Packet::Packet()
 	m_cur = 0;
 }
 
+Packet::~Packet()
+{
+	if (nullptr != m_buff)
+	{
+		delete[] m_buff;
+	}
+}
+
 
 bool Packet::writeForwardStringField(const std::string& str)
 {
@@ -148,6 +156,9 @@ bool Packet::readForwardString(std::string& out, unsigned long length)
 	}
 
 	out.assign(m_buff + m_cur, length);
+
+	m_cur += length;
+
 	return true;
 }
 
@@ -183,4 +194,14 @@ char* Packet::getData() const
 unsigned long Packet::getSize() const
 {
 	return m_len;
+}
+
+void Packet::jumptoStart()
+{
+	m_cur = 0;
+}
+
+void Packet::jumptoEnd()
+{
+	m_cur = m_len;
 }

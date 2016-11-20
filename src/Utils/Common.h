@@ -1,7 +1,6 @@
 #pragma once
 
-
-#define MAX_MESSAGE_SIZE (2000)
+#include <string>
 
 enum commandTypes
 {
@@ -18,5 +17,8 @@ enum commandTypes
 
 class Common
 {
+
+public:
+	static const std::string GENERAL_RESPONSE_SUCCUSS_MESSAGE;
 
 };

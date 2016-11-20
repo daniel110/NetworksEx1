@@ -20,10 +20,13 @@ const std::string Client::PREFIX_INPUT_SUBJECT = "Subject:";
 const std::string Client::PREFIX_INPUT_TEXT = "Text:";
 
 
-Client::Client(std::string& hostname, u_int16_t port,
-		std::ostream& out, std::istream& in) : m_hostname(hostname),
-												m_outStream(out),
-											   m_inStream(in)
+const unsigned int Client::MAX_USER_INPUT_LINE = 2000;
+
+
+const std::string Client::USER_MESSAGE_LOGIN_SUCCESS = "Connected to server\n";
+
+
+Client::Client(std::string& hostname, u_int16_t port) : m_hostname(hostname)
 {
 	m_port = port;
 }
@@ -39,17 +42,20 @@ void Client::start()
 	}
 
 
-	bool keepGoing;
+	bool keepGoing = true;;
 	std::string resultStr;
 
 	/* login user */
 	keepGoing = commandLogin(resultStr);
-
+	if (false == keepGoing)
+	{
+		printStringToUser(resultStr.c_str());
+	}
 
 	std::string input;
 	while (true && keepGoing)
 	{
-		if (false == recvStringFromUser(input))
+		if (false == recvLineFromUser(input))
 		{
 			printStringToUser("Unable to read command - Going down\n");
 			break;
@@ -68,9 +74,14 @@ void Client::start()
 		/********************************
 		 * Call correct command handler *
 		 ********************************/
+		resultStr = "Wrong arguments. Try command again\n";
+
 		if (0 == commandTypeName.compare(COMMAND_SHOW_INBOX))
 		{
-			keepGoing = commandShowInbox(resultStr);
+			if (!inputStream.eof())
+			{
+				keepGoing = commandShowInbox(resultStr);
+			}
 		}
 		else if (0 == commandTypeName.compare(COMMAND_GET_MAIL))
 		{
@@ -82,7 +93,14 @@ void Client::start()
 			}
 			else
 			{
-				keepGoing = commandGetMail(id, resultStr);
+				if (!inputStream.eof())
+				{
+					resultStr = "The second and last parameter of GET_MAIL should be int\n";
+				}
+				else
+				{
+					keepGoing = commandGetMail(id, resultStr);
+				}
 			}
 		}
 		else if (0 == commandTypeName.compare(COMMAND_DELETE_MAIL))
@@ -95,21 +113,33 @@ void Client::start()
 			}
 			else
 			{
-				keepGoing = commandDeleteMail(id, resultStr);
+				if (!inputStream.eof())
+				{
+					resultStr = "The second and last parameter of DELETE_MAIL should be int\n";
+				}
+				else
+				{
+					keepGoing = commandDeleteMail(id, resultStr);
+				}
 			}
 		}
 		else if (0 == commandTypeName.compare(COMMAND_COMPOSE))
 		{
-			keepGoing = commandCompose(resultStr);
+			if (inputStream.eof())
+			{
+				keepGoing = commandCompose(resultStr);
+			}
 		}
 		else if (0 == commandTypeName.compare(COMMAND_QUIT))
 		{
-			keepGoing = commandQuit(resultStr);
+			if (inputStream.eof())
+			{
+				keepGoing = commandQuit(resultStr);
+			}
 		}
 		else
 		{
 			resultStr = "Invalid command type name\n";
-			keepGoing = false;
 		}
 
 
@@ -124,12 +154,42 @@ void Client::start()
 
 bool Client::commandLogin(std::string& result)
 {
+	result = "Failed on Login: ";
 
+	/* get user name from user */
+	std::string input;
+	if (false == recvLineFromUser(input))
+	{
+		result += "Error reading user data\n";
+		return false;
+	}
+
+	/* parse user name from input */
 	std::string user;
-	getStringFromInputWithPrefix(PREFIX_INPUT_USER, user);
+	if (false == getStringFromInputWithPrefix(input,
+											PREFIX_INPUT_USER,
+											user))
+	{
+		result += user;
+		return false;
+	}
 
+	/* get password from user */
+	if (false == recvLineFromUser(input))
+	{
+		result += "Error reading user data\n";
+		return false;
+	}
+
+	/* parse password name from input */
 	std::string pass;
-	getStringFromInputWithPrefix(PREFIX_INPUT_PASSWORD, pass);
+	if (false == getStringFromInputWithPrefix(input,
+											PREFIX_INPUT_PASSWORD,
+											pass))
+	{
+		result += pass;
+		return false;
+	}
 
 	/***************
 	 * BuildPacket *
@@ -139,51 +199,91 @@ bool Client::commandLogin(std::string& result)
 	loginPack.writeForwardStringField(user);
 	loginPack.writeForwardStringField(pass);
 
-	/* TODO: check error */
-	int res = m_sock.send(loginPack);
-
-	Packet responde;
-	/* TODO: check error */
-	res = m_sock.recv(responde, MAX_MESSAGE_SIZE);
-
-	std::string resMessage;
-	if (false == parseGeneralResponse(resMessage))
+	/* send packet */
+	int res = m_sock.sendMessage(loginPack);
+	if (Socket::RES_SUCCESS != res)
 	{
-
+		result += "Error on sending response\n";
+		return false;
 	}
 
-	printStringToUser(resMessage.c_str());
+	/* receive response packet */
+	Packet resPacket;
+	res = m_sock.recvMessage(resPacket);
+	if (Socket::RES_SUCCESS != res)
+	{
+		result += "Error on receiving response\n";
+		return false;
+	}
 
+	/* parse respond */
+	std::string resMessage;
+	if (false == parseGeneralResponse(resPacket, resMessage))
+	{
+		result += "Error on parsing response " + resMessage;
+		return false;
+	}
+
+	if (0 != resMessage.compare(Common::GENERAL_RESPONSE_SUCCUSS_MESSAGE))
+	{
+		result += resMessage;
+		return false;
+	}
+
+	result = USER_MESSAGE_LOGIN_SUCCESS;
 	return true;
 }
 bool Client::commandShowInbox(std::string& result)
 {
+	result = "Failed on Show Inbox: ";
 
 	return true;
 }
 bool Client::commandGetMail(unsigned int mailId, std::string& result)
 {
+	result = "Failed on get mail: ";
 
 	return true;
 }
 bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 {
+	result = "Failed on delete mail: ";
 
 	return true;
 }
 bool Client::commandQuit(std::string& result)
 {
+	result = "Failed on quit: ";
 
 	return true;
 }
 bool Client::commandCompose(std::string& result)
 {
+	result = "Failed on compose mail: ";
+
 	return true;
 }
 
-bool Client::parseGeneralResponse(std::string& result)
+bool Client::parseGeneralResponse(Packet& pack, std::string& result)
 {
+	long commandType;
+	if (false == pack.readForwardDWord(commandType))
+	{
+		result = "Unable to read command type\n";
+		return false;
+	}
 
+	if (COMMANDTYPE_GENERAL_MESSAGE != commandType)
+	{
+		result = "Got wrong type response\n";
+		return false;
+	}
+
+	if (false == pack.readForwardStringField(result))
+	{
+		result = "Failed reading respond\n";
+		return false;
+	}
 
 	return true;
 }
@@ -191,8 +291,8 @@ bool Client::parseGeneralResponse(std::string& result)
 
 bool Client::printStringToUser(const char* output)
 {
-	m_outStream << output;
-	if (m_outStream.fail())
+	std::cout << output;
+	if (std::cout.fail())
 	{
 		return false;
 	}
@@ -201,8 +301,8 @@ bool Client::printStringToUser(const char* output)
 }
 bool Client::printIntToUser(int& output)
 {
-	m_outStream << output;
-	if (m_outStream.fail())
+	std::cout << output;
+	if (std::cout.fail())
 	{
 		return false;
 	}
@@ -210,24 +310,30 @@ bool Client::printIntToUser(int& output)
 	return true;
 }
 
-bool Client::recvStringFromUser(std::string& input)
+
+bool Client::recvLineFromUser(std::string& input)
 {
-	m_inStream >> input;
-	if (m_inStream.fail())
+	char buf[MAX_USER_INPUT_LINE];
+
+	if (NULL == std::fgets(buf, MAX_USER_INPUT_LINE, stdin))
 	{
 		return false;
 	}
 
+	input = buf;
 	return true;
 }
 
 
-bool Client::getStringFromInputWithPrefix(const std::string& expectedPrefix,
+bool Client::getStringFromInputWithPrefix(std::string& orgString,
+											const std::string& expectedPrefix,
 											std::string& data)
 {
+	std::basic_stringstream<char> inputStream(orgString);
+
 	std::string prefix;
-	m_inStream >> prefix;
-	if (m_inStream.fail())
+	inputStream >> prefix;
+	if (inputStream.fail())
 	{
 		data = "Bad info Format\n";
 		return false;
@@ -241,10 +347,16 @@ bool Client::getStringFromInputWithPrefix(const std::string& expectedPrefix,
 		return false;
 	}
 
-	m_inStream >> data;
-	if (m_inStream.fail())
+	inputStream >> data;
+	if (inputStream.fail())
 	{
 		data = "Bad info format - failed to extract data\n";
+		return false;
+	}
+
+	if (!inputStream.eof())
+	{
+		data = "Bad info format - got extra parameter\n";
 		return false;
 	}
 

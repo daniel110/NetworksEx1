@@ -11,8 +11,7 @@
 class Client
 {
 	public:
-		Client(std::string& hostname, u_int16_t port,
-				std::ostream& out, std::istream& in);
+		Client(std::string& hostname, u_int16_t port);
 
 		void start();
 
@@ -25,9 +24,6 @@ class Client
 		std::string& m_hostname;
 		u_int16_t m_port;
 
-		std::ostream& m_outStream;
-		std::istream& m_inStream;
-
 		bool commandLogin(std::string& result);
 		bool commandShowInbox(std::string& result);
 		bool commandGetMail(unsigned int mailId, std::string& result);
@@ -36,14 +32,15 @@ class Client
 		bool commandCompose(std::string& result);
 
 
-		bool parseGeneralResponse(std::string& result);
+		bool parseGeneralResponse(Packet& pack,std::string& result);
 
 		bool printStringToUser(const char* output);
 		bool printIntToUser(int& output);
 
-		bool recvStringFromUser(std::string& input);
+		bool recvLineFromUser(std::string& input);
 
-		bool getStringFromInputWithPrefix(const std::string& expectedPrefix,
+		bool getStringFromInputWithPrefix(std::string& orgString,
+											const std::string& expectedPrefix,
 											std::string& data);
 
 		/******************
@@ -65,6 +62,14 @@ class Client
 		static const std::string PREFIX_INPUT_TO;
 		static const std::string PREFIX_INPUT_SUBJECT;
 		static const std::string PREFIX_INPUT_TEXT;
+
+
+		static const unsigned int MAX_USER_INPUT_LINE;
+
+		/*****************
+		 * User messages *
+		 *****************/
+		static const std::string USER_MESSAGE_LOGIN_SUCCESS;
 
 };
 

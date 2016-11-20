@@ -18,6 +18,9 @@ class Socket
 		static const int RES_INVALID_ADDRESS = -501;
 		static const int RES_INVALID_SOCKET_ERROR = -555;
 		static const int RES_ACCEPT_INVALID_SOCKET_ERROR = -556;
+		static const int RES_BAD_MESSAGE_FORMAT = -600;
+		static const int RES_FAILED_SENDING_ALL_DATA = -600;
+		static const int RES_FAILED_RECEIVING_ALL_DATA = -601;
 
 		static const std::string ANY_IP;
 
@@ -35,9 +38,13 @@ class Socket
         int connect(const std::string& ip, const u_int16_t port);
         int connect(struct in_addr& sinAddress, const u_int16_t port);
 
-        int send ( const std::string& str) const;
+        int sendAll(const char* buf, long size) const;
         int send ( const Packet& packet) const;
         int recv ( Packet& packet, unsigned short size) const;
+
+
+        int recvMessage(Packet& packet) const;
+        int sendMessage(const Packet& packet) const;
 
         bool isValid() const;
 

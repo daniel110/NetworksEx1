@@ -16,6 +16,7 @@ public:
 	const long MAX_FIELD_LENGTH = 1024;
 
 	Packet();
+	virtual ~Packet();
 	bool writeForwardStringField(const std::string& str);
 	bool readForwardStringField(std::string& str);
 	unsigned long bytesLeft() const;
@@ -29,6 +30,10 @@ public:
 	bool readForwardString(std::string& out, unsigned long length);
 
 	unsigned long readLine(char * dst, unsigned long max);
+
+	void jumptoStart();
+	void jumptoEnd();
+
 
 	char * getData() const;
 	unsigned long getSize() const;
