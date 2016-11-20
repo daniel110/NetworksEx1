@@ -15,6 +15,7 @@ class Socket
 		static const int RES_SUCCESS = 0;
 		static const int RES_ALLOCATION_FAILED = -100;
 		static const int RES_INVALID_IP_ADDRESS = -500;
+		static const int RES_INVALID_ADDRESS = -501;
 		static const int RES_INVALID_SOCKET_ERROR = -555;
 		static const int RES_ACCEPT_INVALID_SOCKET_ERROR = -556;
 

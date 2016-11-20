@@ -1,10 +1,12 @@
 #include <sys/types.h>
 
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <new>
 
 #include "Socket.h"
 #include "Packet.h"
@@ -48,9 +50,11 @@ int Socket::bind(const std::string& ip, const u_int16_t port )
 
 	struct sockaddr_in localAddress;
 	int ret = setSocketAddr(localAddress, ip, port);
-	if (0 != ret)
+	if (RES_INVALID_IP_ADDRESS == ret)
 	{
-		return ret;
+		/* handle host name to ip */
+
+		return RES_INVALID_ADDRESS;
 	}
 
 	int result =  ::bind(m_socketfd, /* socket handle */
@@ -104,9 +108,12 @@ int Socket::connect( const std::string& ip, const u_int16_t port )
 
 	struct sockaddr_in remoteAddress;
 	int ret = setSocketAddr(remoteAddress, ip, port);
-	if (0 != ret)
+
+	if (RES_INVALID_IP_ADDRESS == ret)
 	{
-		return ret;
+		/* handle host name to ip */
+
+		return RES_INVALID_ADDRESS;
 	}
 
 	return innerConnect(remoteAddress);
@@ -173,12 +180,8 @@ int Socket::recv(Packet& packet, unsigned short size) const
 		return RES_INVALID_SOCKET_ERROR;
 	}
 
-	char* buf = NULL;
-	try
-	{
-		buf = new char[size];
-	}
-	catch(std::bad_alloc& e)
+	char* buf = new (std::nothrow) char[size];
+	if (0 == buf)
 	{
 		return RES_ALLOCATION_FAILED;
 	}
