@@ -32,11 +32,12 @@ class Client
 		bool commandCompose(std::string& result);
 
 
-		bool parseGeneralResponse(Packet& pack,std::string& result);
+		bool parseGeneralResponse(long commandType,
+										Packet& pack,
+										std::string& result);
+
 
 		bool printStringToUser(const char* output);
-		bool printIntToUser(int& output);
-
 		bool recvLineFromUser(std::string& input);
 
 		bool getStringFromInputWithPrefix(std::string& orgString,
@@ -70,6 +71,13 @@ class Client
 		 * User messages *
 		 *****************/
 		static const std::string USER_MESSAGE_LOGIN_SUCCESS;
+		static const std::string USER_MESSAGE_COMPOSE_SUCCESS;
+
+
+		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_FROM;
+		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_TO;
+		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_SUBJECT;
+		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_TEXT;
 
 };
 

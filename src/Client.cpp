@@ -20,10 +20,17 @@ const std::string Client::PREFIX_INPUT_SUBJECT = "Subject:";
 const std::string Client::PREFIX_INPUT_TEXT = "Text:";
 
 
+const std::string Client::PREFIX_MAIL_DATA_ON_GET_MAIL_FROM= "From: ";
+const std::string Client::PREFIX_MAIL_DATA_ON_GET_MAIL_TO = "To: ";
+const std::string Client::PREFIX_MAIL_DATA_ON_GET_MAIL_SUBJECT = "Subject: ";
+const std::string Client::PREFIX_MAIL_DATA_ON_GET_MAIL_TEXT = "Text: ";
+
 const unsigned int Client::MAX_USER_INPUT_LINE = 2000;
 
 
 const std::string Client::USER_MESSAGE_LOGIN_SUCCESS = "Connected to server\n";
+const std::string Client::USER_MESSAGE_COMPOSE_SUCCESS = "Mail sent\n";
+
 
 
 Client::Client(std::string& hostname, u_int16_t port) : m_hostname(hostname)
@@ -216,9 +223,18 @@ bool Client::commandLogin(std::string& result)
 		return false;
 	}
 
+	long commandType;
+	if (false == resPacket.readForwardDWord(commandType))
+	{
+		result = "Unable to read command type\n";
+		return false;
+	}
+
 	/* parse respond */
 	std::string resMessage;
-	if (false == parseGeneralResponse(resPacket, resMessage))
+	if (false == parseGeneralResponse(commandType,
+										resPacket,
+										resMessage))
 	{
 		result += "Error on parsing response " + resMessage;
 		return false;
@@ -237,51 +253,371 @@ bool Client::commandShowInbox(std::string& result)
 {
 	result = "Failed on Show Inbox: ";
 
+	/***************
+	 * BuildPacket *
+	 ***************/
+	Packet showInboxPack;
+	showInboxPack.writeForwardDWord(COMMANDTYPE_SHOW_INBOX_REQ);
+
+	/* send packet */
+	int res = m_sock.sendMessage(showInboxPack);
+	if (Socket::RES_SUCCESS != res)
+	{
+		result += "Error on sending command\n";
+		return true;
+	}
+
+
+	/* receive response packet */
+	Packet resPacket;
+	res = m_sock.recvMessage(resPacket);
+	if (Socket::RES_SUCCESS != res)
+	{
+		result += "Error on receiving response\n";
+		return true;
+	}
+	/**********************
+	 * Check command type *
+	 **********************/
+	long commandType;
+	if (false == resPacket.readForwardDWord(commandType))
+	{
+		result = "Unable to read command type\n";
+		return false;
+	}
+
+	if (COMMANDTYPE_SHOW_INBOX_RES != commandType)
+	{
+		if (false == parseGeneralResponse(commandType,
+											resPacket,
+											result))
+		{
+			return false;
+		}
+	}
+
+	/********************************************
+	 * Parse command - read and print all mails *
+	 ********************************************/
+	std::string mailInfo;
+	while (0 != resPacket.bytesLeft())
+	{
+		if (false == resPacket.readForwardStringField(mailInfo))
+		{
+			result += "Failed to read next mail from packet\n";
+			return true;
+		}
+
+		if (false == printStringToUser(mailInfo.c_str()))
+		{
+			/* nothing to do, just exit */
+			result.clear();
+			return false;
+		}
+	}
+
+	result.clear();
 	return true;
 }
 bool Client::commandGetMail(unsigned int mailId, std::string& result)
 {
-	result = "Failed on get mail: ";
+	result = "Failed on Get Mail: ";
 
+	/***************
+	 * BuildPacket *
+	 ***************/
+	Packet showInboxPack;
+	showInboxPack.writeForwardDWord(COMMANDTYPE_GET_MAIL_REQ);
+	showInboxPack.writeForwardDWord(mailId);
+
+	/* send packet */
+	int res = m_sock.sendMessage(showInboxPack);
+	if (Socket::RES_SUCCESS != res)
+	{
+		result += "Error on sending command\n";
+		return true;
+	}
+
+
+	/* receive response packet */
+	Packet resPacket;
+	res = m_sock.recvMessage(resPacket);
+	if (Socket::RES_SUCCESS != res)
+	{
+		result += "Error on receiving response\n";
+		return true;
+	}
+	/**********************
+	 * Check command type *
+	 **********************/
+	long commandType;
+	if (false == resPacket.readForwardDWord(commandType))
+	{
+		result = "Unable to read command type\n";
+		return false;
+	}
+
+	if (COMMANDTYPE_GET_MAIL_REQ != commandType)
+	{
+		if (false == parseGeneralResponse(commandType,
+											resPacket,
+											result))
+		{
+			return false;
+		}
+	}
+
+	/********************************************
+	 * Parse command - read and print mail data *
+	 ********************************************/
+	std::string mailInfo;
+	if (false == resPacket.readForwardStringField(mailInfo))
+	{
+		result += "Failed to read 'From' field\n";
+		return true;
+	}
+
+	mailInfo = PREFIX_MAIL_DATA_ON_GET_MAIL_FROM + mailInfo;
+	if (false == printStringToUser(mailInfo.c_str()))
+	{
+		/* nothing to do, just exit */
+		result.clear();
+		return false;
+	}
+
+	if (false == resPacket.readForwardStringField(mailInfo))
+	{
+		result += "Failed to read 'To' field\n";
+		return true;
+	}
+
+	mailInfo = PREFIX_MAIL_DATA_ON_GET_MAIL_TO + mailInfo;
+	if (false == printStringToUser(mailInfo.c_str()))
+	{
+		/* nothing to do, just exit */
+		result.clear();
+		return false;
+	}
+
+
+	if (false == resPacket.readForwardStringField(mailInfo))
+	{
+		result += "Failed to read 'Subject' field\n";
+		return true;
+	}
+
+	mailInfo = PREFIX_MAIL_DATA_ON_GET_MAIL_SUBJECT + mailInfo;
+	if (false == printStringToUser(mailInfo.c_str()))
+	{
+		/* nothing to do, just exit */
+		result.clear();
+		return false;
+	}
+
+
+	if (false == resPacket.readForwardStringField(mailInfo))
+	{
+		result += "Failed to read 'Text' field\n";
+		return true;
+	}
+
+	mailInfo = PREFIX_MAIL_DATA_ON_GET_MAIL_TEXT + mailInfo;
+	if (false == printStringToUser(mailInfo.c_str()))
+	{
+		/* nothing to do, just exit */
+		result.clear();
+		return false;
+	}
+
+
+	result.clear();
 	return true;
 }
 bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 {
 	result = "Failed on delete mail: ";
 
-	return true;
-}
-bool Client::commandQuit(std::string& result)
-{
-	result = "Failed on quit: ";
+	/***************
+	 * BuildPacket *
+	 ***************/
+	Packet showInboxPack;
+	showInboxPack.writeForwardDWord(COMMANDTYPE_GET_MAIL_REQ);
+	showInboxPack.writeForwardDWord(mailId);
 
-	return true;
-}
-bool Client::commandCompose(std::string& result)
-{
-	result = "Failed on compose mail: ";
+	/* send packet */
+	int res = m_sock.sendMessage(showInboxPack);
+	if (Socket::RES_SUCCESS != res)
+	{
+		result += "Error on sending command\n";
+		return true;
+	}
 
-	return true;
-}
 
-bool Client::parseGeneralResponse(Packet& pack, std::string& result)
-{
+	/* receive response packet */
+	Packet resPacket;
+	res = m_sock.recvMessage(resPacket);
+	if (Socket::RES_SUCCESS != res)
+	{
+		result += "Error on receiving response\n";
+		return true;
+	}
+	/**********************
+	 * Check command type *
+	 **********************/
 	long commandType;
-	if (false == pack.readForwardDWord(commandType))
+	if (false == resPacket.readForwardDWord(commandType))
 	{
 		result = "Unable to read command type\n";
 		return false;
 	}
 
+	/* parse respond */
+	std::string resMessage;
+	if (false == parseGeneralResponse(commandType,
+										resPacket,
+										resMessage))
+	{
+		result += "Error on parsing response " + resMessage;
+		return false;
+	}
+
+	if (0 != resMessage.compare(Common::GENERAL_RESPONSE_SUCCUSS_MESSAGE))
+	{
+		result += resMessage;
+		return false;
+	}
+
+	result.clear();
+	return true;
+}
+bool Client::commandQuit(std::string& result)
+{
+	/* just break the loop - and exit - not message to show */
+	result.clear();
+	return false;
+}
+bool Client::commandCompose(std::string& result)
+{
+	result = "Failed on compose mail: ";
+
+	/* get user name from user */
+	std::string input;
+	if (false == recvLineFromUser(input))
+	{
+		result += "Error reading user data\n";
+		return false;
+	}
+
+	/* parse To from input */
+	std::string toFeild;
+	if (false == getStringFromInputWithPrefix(input,
+											PREFIX_INPUT_TO,
+											toFeild))
+	{
+		result += toFeild;
+		return true;
+	}
+
+	/* get subject from user */
+	if (false == recvLineFromUser(input))
+	{
+		result += "Error reading user data\n";
+		return false;
+	}
+
+	/* parse subject from input */
+	std::string subjectFeild;
+	if (false == getStringFromInputWithPrefix(input,
+											PREFIX_INPUT_SUBJECT,
+											subjectFeild))
+	{
+		result += subjectFeild;
+		return true;
+	}
+
+	/* get text from user */
+	if (false == recvLineFromUser(input))
+	{
+		result += "Error reading user data\n";
+		return false;
+	}
+
+	/* parse password name from input */
+	std::string textFeild;
+	if (false == getStringFromInputWithPrefix(input,
+											PREFIX_INPUT_TEXT,
+											textFeild))
+	{
+		result += textFeild;
+		return true;
+	}
+
+	/***************
+	 * BuildPacket *
+	 ***************/
+	Packet loginPack;
+	loginPack.writeForwardDWord(COMMANDTYPE_LOGIN_REQ);
+	loginPack.writeForwardStringField(toFeild);
+	loginPack.writeForwardStringField(subjectFeild);
+	loginPack.writeForwardStringField(textFeild);
+
+	/* send packet */
+	int res = m_sock.sendMessage(loginPack);
+	if (Socket::RES_SUCCESS != res)
+	{
+		result += "Error on sending response\n";
+		return false;
+	}
+
+	/* receive response packet */
+	Packet resPacket;
+	res = m_sock.recvMessage(resPacket);
+	if (Socket::RES_SUCCESS != res)
+	{
+		result += "Error on receiving response\n";
+		return false;
+	}
+
+	long commandType;
+	if (false == resPacket.readForwardDWord(commandType))
+	{
+		result = "Unable to read command type\n";
+		return false;
+	}
+
+	/* parse respond */
+	std::string resMessage;
+	if (false == parseGeneralResponse(commandType,
+										resPacket,
+										resMessage))
+	{
+		result += "Error on parsing response " + resMessage;
+		return false;
+	}
+
+	if (0 != resMessage.compare(Common::GENERAL_RESPONSE_SUCCUSS_MESSAGE))
+	{
+		result += resMessage;
+		return false;
+	}
+
+	result = USER_MESSAGE_COMPOSE_SUCCESS;
+	return true;
+}
+
+bool Client::parseGeneralResponse( long commandType,
+									Packet& pack,
+									std::string& result)
+{
 	if (COMMANDTYPE_GENERAL_MESSAGE != commandType)
 	{
-		result = "Got wrong type response\n";
+		result += "Got wrong type response\n";
 		return false;
 	}
 
 	if (false == pack.readForwardStringField(result))
 	{
-		result = "Failed reading respond\n";
+		result += "Failed reading respond\n";
 		return false;
 	}
 
@@ -291,17 +627,7 @@ bool Client::parseGeneralResponse(Packet& pack, std::string& result)
 
 bool Client::printStringToUser(const char* output)
 {
-	std::cout << output;
-	if (std::cout.fail())
-	{
-		return false;
-	}
-
-	return true;
-}
-bool Client::printIntToUser(int& output)
-{
-	std::cout << output;
+	std::cout << output << std::endl;
 	if (std::cout.fail())
 	{
 		return false;
