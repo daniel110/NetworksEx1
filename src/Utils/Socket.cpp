@@ -12,8 +12,6 @@
 #include "Socket.h"
 #include "Packet.h"
 
-const std::string Socket::ANY_IP= "0.0.0.0";
-
 
 Socket::Socket(socket_handle socketfd) : m_socketfd(socketfd)
 {
@@ -53,12 +51,10 @@ int Socket::bind(const std::string& ip, const u_int16_t port )
 	int ret = setSocketAddr(localAddress, ip, port);
 	if (RES_INVALID_IP_ADDRESS == ret)
 	{
-		/* handle host name to ip */
-
 		return RES_INVALID_ADDRESS;
 	}
 
-	int result =  ::bind(m_socketfd, /* socket handle */
+	int result = ::bind(m_socketfd, /* socket handle */
 					(sockaddr*) &localAddress, /* address struct */
 					sizeof(localAddress)); /* size of struct */
 
@@ -100,7 +96,7 @@ int Socket::accept( Socket& clientSocket) const
 	return RES_SUCCESS;
 }
 
-int Socket::connect( const std::string& ip, const u_int16_t port )
+int Socket::connect( const std::string& host, const u_int16_t port )
 {
 	if (!isValid())
 	{
@@ -108,32 +104,16 @@ int Socket::connect( const std::string& ip, const u_int16_t port )
 	}
 
 	struct sockaddr_in remoteAddress;
-	int ret = setSocketAddr(remoteAddress, ip, port);
 
-	if (RES_INVALID_IP_ADDRESS == ret)
+	int ret = setSocketAddr(remoteAddress, host, port);
+	if (RES_SUCCESS != ret)
 	{
-		/* handle host name to ip */
-
-		return RES_INVALID_ADDRESS;
+		return ret;
 	}
 
 	return innerConnect(remoteAddress);
 }
 
-int Socket::connect(struct in_addr& sinAddress, const u_int16_t port )
-{
-	if (!isValid())
-	{
-		return RES_INVALID_SOCKET_ERROR;
-	}
-
-	struct sockaddr_in remoteAddress;
-	remoteAddress.sin_family = AF_INET;
-	remoteAddress.sin_port = htons(port);
-	remoteAddress.sin_addr = sinAddress;
-
-	return innerConnect(remoteAddress);
-}
 
 int Socket::innerConnect(struct sockaddr_in& remoteAddress)
 {
@@ -159,20 +139,20 @@ int Socket::sendAll(const char* buf, long size) const
 	while(total < size)
 	{
 		readBytesCount = ::send(m_socketfd,
-						(void*) buf+total,
+						(void*) (buf+total),
 						(unsigned int) bytesLeft,
 						0);
 
-		if(-1 == readBytesCount)
+		if (-1 == readBytesCount)
 		{
-			break;
+			return RES_SOCKET_GENERAL_FAILURE;
 		}
 
 		total += readBytesCount;
 		bytesLeft -= readBytesCount;
 	}
 
-	return readBytesCount;
+	return RES_SUCCESS;
 }
 
 int Socket::send(const Packet& packet) const
@@ -203,13 +183,6 @@ int Socket::recv(Packet& packet, unsigned short size) const
 							size,
 							0);
 
-	if (size != readSize)
-	{
-		delete[] buf;
-		return RES_FAILED_RECEIVING_ALL_DATA;
-
-	}
-
 	bool writeRes = packet.writeForward(buf, readSize);
 	delete[] buf;
 
@@ -219,7 +192,7 @@ int Socket::recv(Packet& packet, unsigned short size) const
 	}
 
 	packet.jumptoStart();
-	return RES_SUCCESS;
+	return readSize;
 }
 
 int Socket::recvMessage(Packet& packet) const
@@ -253,7 +226,20 @@ int Socket::recvMessage(Packet& packet) const
 
 	delete[] buf;
 
-	return recv(packet, messageSize);
+	int result = recv(packet, messageSize);
+
+	if (result < 0)
+	{
+		/* result is an error */
+		return result;
+	}
+
+	if (result != messageSize)
+	{
+		return RES_FAILED_RECEIVING_ALL_DATA;
+	}
+
+	return RES_SUCCESS;
 }
 
 int Socket::sendMessage(const Packet& packet) const
@@ -282,16 +268,31 @@ void Socket::close()
 }
 
 int Socket::setSocketAddr(struct sockaddr_in& address,
-					const std::string& ip,
+					const std::string& host,
 					const u_int16_t port)
 {
 	address.sin_family = AF_INET;
+	/* htons has no error value */
 	address.sin_port = htons(port);
 
-	int ret = inet_aton(ip.c_str(), &(address.sin_addr));
+	int ret = inet_aton(host.c_str(), &(address.sin_addr));
 	if (1 != ret)
 	{
-		return RES_INVALID_IP_ADDRESS;
+		/* trying to convert host to ip address */
+		struct hostent* hp = gethostbyname(host.c_str());
+		if (NULL == hp)
+		{
+			return RES_INVALID_ADDRESS;
+		}
+
+		/* get only the first ip of the host */
+		struct in_addr* ipAdd = (struct in_addr*) hp->h_addr_list[0];
+		if (NULL == ipAdd)
+		{
+			return RES_INVALID_ADDRESS;
+		}
+
+		address.sin_addr = *ipAdd;
 	}
 
 	return RES_SUCCESS;
@@ -302,4 +303,68 @@ void Socket::setSocket(socket_handle socketfd)
 {
 	close();
 	m_socketfd = socketfd;
+}
+
+
+
+void Socket::fromSocketResultToErrorString(int result,
+										std::string& error)
+{
+	switch(result)
+	{
+		case RES_SUCCESS:
+		{
+			error.clear();
+			break;
+		}
+		case RES_SOCKET_GENERAL_FAILURE:
+		{
+			error = strerror(errno);
+			break;
+		}
+
+		case RES_BAD_MESSAGE_FORMAT:
+		{
+			error = "Failed to read packet size";
+			break;
+		}
+		case RES_FAILED_RECEIVING_ALL_DATA:
+		{
+			error = "Failed to reading all data from socket";
+			break;
+		}
+		case RES_FAILED_SENDING_ALL_DATA:
+		{
+			error = "Failed to sending all data";
+			break;
+		}
+		case RES_ACCEPT_INVALID_SOCKET_ERROR:
+		{
+			error = "Failed to accept client connection";
+			break;
+		}
+		case RES_INVALID_SOCKET_ERROR:
+		{
+			error = "The socket is invalid";
+			break;
+		}
+		case RES_INVALID_ADDRESS:
+		{
+			error = "The address is neither hostname or ip";
+			break;
+		}
+		case RES_INVALID_IP_ADDRESS:
+		{
+			error = "The address is not an ip";
+			break;
+		}
+		case RES_ALLOCATION_FAILED:
+		{
+			error = "Failed to allocate necessary memory";
+			break;
+		}
+
+		default:
+			error = "Unknown socket error";
+	}
 }

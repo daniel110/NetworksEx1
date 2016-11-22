@@ -1,12 +1,35 @@
-#include <stdlib.h>
-#include <stdio.h>
+#include <iostream>
 
 #include "Client.h"
 
 
-int maina (int argc, char ** argv) {
+#define DEFAULT_HOST ("localhost")
+#define DEFAULT_PORT (6423)
 
-	printf("Hello Client"); /* TODO: remove this line */
+
+int mainb (int argc, char ** argv)
+{
+	std::string remoteHost(DEFAULT_HOST);
+	u_int16_t remotePort = DEFAULT_PORT;
+
+
+	if (argc > 1)
+	{
+		remoteHost = argv[1];
+	}
+	if (argc > 2)
+	{
+		remotePort = atoi(argv[2]);
+	}
+	/* do not care if we got extra parameters */
+
+
+	/* create and run client  */
+	Client client(remoteHost, remotePort);
+	client.start();
+
 
 	return EXIT_SUCCESS;
 }
+
+

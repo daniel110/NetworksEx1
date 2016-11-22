@@ -42,7 +42,7 @@ void Client::start()
 {
 	int res = 0;
 	res = m_sock.connect(m_hostname, m_port);
-	if (Socket::RES_INVALID_ADDRESS == res)
+	if (RES_INVALID_ADDRESS == res)
 	{
 		printStringToUser("Invalid Hostname Address\n");
 		return;
@@ -52,15 +52,19 @@ void Client::start()
 	bool keepGoing = true;;
 	std::string resultStr;
 
-	/* login user */
+	/* First and must operation: login user to server*/
 	keepGoing = commandLogin(resultStr);
 	if (false == keepGoing)
 	{
 		printStringToUser(resultStr.c_str());
+		return;
 	}
 
+	/******************************************
+	 * Mail Loop: receive and execute command *
+	 ******************************************/
 	std::string input;
-	while (true && keepGoing)
+	while (keepGoing)
 	{
 		if (false == recvLineFromUser(input))
 		{
@@ -68,10 +72,10 @@ void Client::start()
 			break;
 		}
 		std::basic_stringstream<char> inputStream(input);
-		/*Get only first word*/
+
+		/* Get only first word (should be a command string) */
 		std::string commandTypeName;
 		inputStream >> commandTypeName;
-
 		if (inputStream.fail() )
 		{
 			printStringToUser("Unable to extract command type\n");
@@ -81,10 +85,12 @@ void Client::start()
 		/********************************
 		 * Call correct command handler *
 		 ********************************/
-		resultStr = "Wrong arguments. Try command again\n";
+		resultStr = "Got Extra arguments. Try command again.\n";
 
 		if (0 == commandTypeName.compare(COMMAND_SHOW_INBOX))
 		{
+			/* before calling each command - we check that no extra argument
+			 * was passed by the user */
 			if (!inputStream.eof())
 			{
 				keepGoing = commandShowInbox(resultStr);
@@ -94,6 +100,7 @@ void Client::start()
 		{
 			int id;
 			inputStream >> id;
+			/* check that the argument was really an int */
 			if (inputStream.fail() )
 			{
 				resultStr = "Unable to extract mail id.\n";
@@ -150,10 +157,11 @@ void Client::start()
 		}
 
 
+		/* log handler result */
 		if ( false == printStringToUser(resultStr.c_str()))
 		{
 			/* nothing to do, just exit */
-			break;
+			keepGoing = false;
 		}
 	}
 
@@ -163,35 +171,18 @@ bool Client::commandLogin(std::string& result)
 {
 	result = "Failed on Login: ";
 
-	/* get user name from user */
-	std::string input;
-	if (false == recvLineFromUser(input))
-	{
-		result += "Error reading user data\n";
-		return false;
-	}
-
 	/* parse user name from input */
 	std::string user;
-	if (false == getStringFromInputWithPrefix(input,
-											PREFIX_INPUT_USER,
+	if (false == receiveUserCommandArg(PREFIX_INPUT_USER,
 											user))
 	{
 		result += user;
 		return false;
 	}
 
-	/* get password from user */
-	if (false == recvLineFromUser(input))
-	{
-		result += "Error reading user data\n";
-		return false;
-	}
-
 	/* parse password name from input */
 	std::string pass;
-	if (false == getStringFromInputWithPrefix(input,
-											PREFIX_INPUT_PASSWORD,
+	if (false == receiveUserCommandArg(PREFIX_INPUT_PASSWORD,
 											pass))
 	{
 		result += pass;
@@ -206,20 +197,15 @@ bool Client::commandLogin(std::string& result)
 	loginPack.writeForwardStringField(user);
 	loginPack.writeForwardStringField(pass);
 
-	/* send packet */
-	int res = m_sock.sendMessage(loginPack);
-	if (Socket::RES_SUCCESS != res)
+	if (false == sendCommandAndLogSocketError(loginPack,result))
 	{
-		result += "Error on sending response\n";
 		return false;
 	}
 
 	/* receive response packet */
 	Packet resPacket;
-	res = m_sock.recvMessage(resPacket);
-	if (Socket::RES_SUCCESS != res)
+	if (false == receiveRespondAndLogSocketError(resPacket,result))
 	{
-		result += "Error on receiving response\n";
 		return false;
 	}
 
@@ -259,23 +245,18 @@ bool Client::commandShowInbox(std::string& result)
 	Packet showInboxPack;
 	showInboxPack.writeForwardDWord(COMMANDTYPE_SHOW_INBOX_REQ);
 
-	/* send packet */
-	int res = m_sock.sendMessage(showInboxPack);
-	if (Socket::RES_SUCCESS != res)
+	if (false == sendCommandAndLogSocketError(showInboxPack,result))
 	{
-		result += "Error on sending command\n";
-		return true;
+		return false;
 	}
-
 
 	/* receive response packet */
 	Packet resPacket;
-	res = m_sock.recvMessage(resPacket);
-	if (Socket::RES_SUCCESS != res)
+	if (false == receiveRespondAndLogSocketError(resPacket,result))
 	{
-		result += "Error on receiving response\n";
-		return true;
+		return false;
 	}
+
 	/**********************
 	 * Check command type *
 	 **********************/
@@ -326,27 +307,22 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 	/***************
 	 * BuildPacket *
 	 ***************/
-	Packet showInboxPack;
-	showInboxPack.writeForwardDWord(COMMANDTYPE_GET_MAIL_REQ);
-	showInboxPack.writeForwardDWord(mailId);
+	Packet getMailPack;
+	getMailPack.writeForwardDWord(COMMANDTYPE_GET_MAIL_REQ);
+	getMailPack.writeForwardDWord(mailId);
 
-	/* send packet */
-	int res = m_sock.sendMessage(showInboxPack);
-	if (Socket::RES_SUCCESS != res)
+	if (false == sendCommandAndLogSocketError(getMailPack,result))
 	{
-		result += "Error on sending command\n";
-		return true;
+		return false;
 	}
-
 
 	/* receive response packet */
 	Packet resPacket;
-	res = m_sock.recvMessage(resPacket);
-	if (Socket::RES_SUCCESS != res)
+	if (false == receiveRespondAndLogSocketError(resPacket,result))
 	{
-		result += "Error on receiving response\n";
-		return true;
+		return false;
 	}
+
 	/**********************
 	 * Check command type *
 	 **********************/
@@ -440,27 +416,23 @@ bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 	/***************
 	 * BuildPacket *
 	 ***************/
-	Packet showInboxPack;
-	showInboxPack.writeForwardDWord(COMMANDTYPE_GET_MAIL_REQ);
-	showInboxPack.writeForwardDWord(mailId);
+	Packet deleteMailPack;
+	deleteMailPack.writeForwardDWord(COMMANDTYPE_GET_MAIL_REQ);
+	deleteMailPack.writeForwardDWord(mailId);
 
 	/* send packet */
-	int res = m_sock.sendMessage(showInboxPack);
-	if (Socket::RES_SUCCESS != res)
+	if (false == sendCommandAndLogSocketError(deleteMailPack,result))
 	{
-		result += "Error on sending command\n";
-		return true;
+		return false;
 	}
-
 
 	/* receive response packet */
 	Packet resPacket;
-	res = m_sock.recvMessage(resPacket);
-	if (Socket::RES_SUCCESS != res)
+	if (false == receiveRespondAndLogSocketError(resPacket,result))
 	{
-		result += "Error on receiving response\n";
-		return true;
+		return false;
 	}
+
 	/**********************
 	 * Check command type *
 	 **********************/
@@ -499,85 +471,58 @@ bool Client::commandQuit(std::string& result)
 bool Client::commandCompose(std::string& result)
 {
 	result = "Failed on compose mail: ";
+	bool keepGoing = true;
 
-	/* get user name from user */
-	std::string input;
-	if (false == recvLineFromUser(input))
-	{
-		result += "Error reading user data\n";
-		return false;
-	}
-
-	/* parse To from input */
 	std::string toFeild;
-	if (false == getStringFromInputWithPrefix(input,
-											PREFIX_INPUT_TO,
+	if (false == receiveUserCommandArg(PREFIX_INPUT_TO,
 											toFeild))
 	{
 		result += toFeild;
-		return true;
+		return keepGoing;
 	}
-
-	/* get subject from user */
-	if (false == recvLineFromUser(input))
-	{
-		result += "Error reading user data\n";
-		return false;
-	}
-
 	/* parse subject from input */
 	std::string subjectFeild;
-	if (false == getStringFromInputWithPrefix(input,
-											PREFIX_INPUT_SUBJECT,
+	if (false == receiveUserCommandArg(PREFIX_INPUT_SUBJECT,
 											subjectFeild))
 	{
 		result += subjectFeild;
-		return true;
+		return keepGoing;
 	}
-
-	/* get text from user */
-	if (false == recvLineFromUser(input))
-	{
-		result += "Error reading user data\n";
-		return false;
-	}
-
 	/* parse password name from input */
 	std::string textFeild;
-	if (false == getStringFromInputWithPrefix(input,
-											PREFIX_INPUT_TEXT,
+	if (false == receiveUserCommandArg(PREFIX_INPUT_TEXT,
 											textFeild))
 	{
 		result += textFeild;
-		return true;
+		return keepGoing;
 	}
 
 	/***************
 	 * BuildPacket *
 	 ***************/
-	Packet loginPack;
-	loginPack.writeForwardDWord(COMMANDTYPE_LOGIN_REQ);
-	loginPack.writeForwardStringField(toFeild);
-	loginPack.writeForwardStringField(subjectFeild);
-	loginPack.writeForwardStringField(textFeild);
+	Packet composePack;
+	composePack.writeForwardDWord(COMMANDTYPE_COMPOSE_REQ);
+	composePack.writeForwardStringField(toFeild);
+	composePack.writeForwardStringField(subjectFeild);
+	composePack.writeForwardStringField(textFeild);
 
 	/* send packet */
-	int res = m_sock.sendMessage(loginPack);
-	if (Socket::RES_SUCCESS != res)
+	if (false == sendCommandAndLogSocketError(composePack,result))
 	{
-		result += "Error on sending response\n";
 		return false;
 	}
 
 	/* receive response packet */
 	Packet resPacket;
-	res = m_sock.recvMessage(resPacket);
-	if (Socket::RES_SUCCESS != res)
+	if (false == receiveRespondAndLogSocketError(resPacket,result))
 	{
-		result += "Error on receiving response\n";
 		return false;
 	}
 
+
+	/**********************
+	 * Check command type *
+	 **********************/
 	long commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
@@ -598,7 +543,7 @@ bool Client::commandCompose(std::string& result)
 	if (0 != resMessage.compare(Common::GENERAL_RESPONSE_SUCCUSS_MESSAGE))
 	{
 		result += resMessage;
-		return false;
+		return keepGoing;
 	}
 
 	result = USER_MESSAGE_COMPOSE_SUCCESS;
@@ -651,6 +596,28 @@ bool Client::recvLineFromUser(std::string& input)
 }
 
 
+bool Client::receiveUserCommandArg(const std::string& expectedPrefix,
+									std::string& data)
+{
+	std::string input;
+	if (false == recvLineFromUser(input))
+	{
+		data += "Error reading user data\n";
+		return false;
+	}
+
+	/* parse data from input */
+	if (false == getStringFromInputWithPrefix(input,
+											expectedPrefix,
+											data))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
 bool Client::getStringFromInputWithPrefix(std::string& orgString,
 											const std::string& expectedPrefix,
 											std::string& data)
@@ -683,6 +650,44 @@ bool Client::getStringFromInputWithPrefix(std::string& orgString,
 	if (!inputStream.eof())
 	{
 		data = "Bad info format - got extra parameter\n";
+		return false;
+	}
+
+	return true;
+}
+
+bool Client::sendCommandAndLogSocketError(Packet& pack,
+											std::string& error)
+{
+	/* send packet */
+	int res = m_sock.sendMessage(pack);
+	if (RES_SUCCESS != res)
+	{
+		std::string socketErr;
+		Socket::fromSocketResultToErrorString(res, socketErr);
+
+		error += "Error on sending command: " +
+					socketErr + "\n";
+
+		return false;
+	}
+
+	return true;
+}
+
+bool Client::receiveRespondAndLogSocketError(Packet& pack,
+											std::string& error)
+{
+	/* send packet */
+	int res = m_sock.recvMessage(pack);
+	if (RES_SUCCESS != res)
+	{
+		std::string socketErr;
+		Socket::fromSocketResultToErrorString(res, socketErr);
+
+		error += "Error on receiving response: " +
+					socketErr + "\n";
+
 		return false;
 	}
 

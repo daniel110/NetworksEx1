@@ -11,19 +11,29 @@
 class Client
 {
 	public:
+		/***
+		 * Ctor - get hostname and port of the server
+		 */
 		Client(std::string& hostname, u_int16_t port);
 
+		/**
+		 * start client
+		 */
 		void start();
 
-
-	/************
-	 * commands *
-	 ************/
 	private:
 		Socket m_sock;
 		std::string& m_hostname;
 		u_int16_t m_port;
 
+
+		/************
+		 * commands *
+		 ************/
+		/****
+		 * All command get string:result as arg and set it
+		 * with a message to the user (errors or info)
+		 ****/
 		bool commandLogin(std::string& result);
 		bool commandShowInbox(std::string& result);
 		bool commandGetMail(unsigned int mailId, std::string& result);
@@ -32,17 +42,68 @@ class Client
 		bool commandCompose(std::string& result);
 
 
+		/****
+		 * Check whether the *commandType* is equal to general respond type
+		 * and set *result* with the responded data from the server.
+		 *
+		 * @return: On success true, On failure false (result holds the error)
+		 */
 		bool parseGeneralResponse(long commandType,
 										Packet& pack,
 										std::string& result);
 
-
+		/****
+		 * Print *output* to the user console
+		 *
+		 * @return: On success true, On failure false (output holds the error)
+		 */
 		bool printStringToUser(const char* output);
+
+		/****
+		 * set *input* with string from the console
+		 *
+		 * @return: On success true, On failure false (input holds the error)
+		 */
 		bool recvLineFromUser(std::string& input);
 
+		/****
+		 * 1) Uses recvLineFromUser to get user's input.
+		 * 2) Uses getStringFromInputWithPrefix to check whether
+		 * 		the first arg is equal to *expectedPrefix*.
+		 * 3) if it is - set *data* to the next users' arg
+		 *
+		 * @return: On success true, On failure false (data holds the error)
+		 */
+		bool receiveUserCommandArg(const std::string& expectedPrefix,
+										std::string& data);
+
+		/****
+		 * Check whether the first word in *orgString* is equal to *expectedPrefix*.
+		 * If it is - set *data* to the next word in *orgString*
+		 *
+		 * @return: On success true, On failure false (data holds the error)
+		 */
 		bool getStringFromInputWithPrefix(std::string& orgString,
 											const std::string& expectedPrefix,
 											std::string& data);
+
+
+		/****
+		 * send *pack* using m_sock. if an error occurs, log it in *error*
+		 *
+		 * @return: On success true, On failure false (error holds the error)
+		 */
+		bool sendCommandAndLogSocketError(Packet& pack,
+												std::string& error);
+
+		/****
+		 * receive data from m_sock to *pack*. if an error occurs, log it in *error*
+		 *
+		 * @return: On success true, On failure false (error holds the error)
+		 */
+		bool receiveRespondAndLogSocketError(Packet& pack,
+													std::string& error);
+
 
 		/******************
 		 * Commands Names *
@@ -54,9 +115,9 @@ class Client
 		static const std::string COMMAND_COMPOSE;
 
 
-		/********************************
-		 * Prefixes for user input data *
-		 ********************************/
+		/********************************************
+		 * Prefixes for user input data (to remove) *
+		 ********************************************/
 		static const std::string PREFIX_INPUT_USER;
 		static const std::string PREFIX_INPUT_PASSWORD;
 
@@ -73,7 +134,9 @@ class Client
 		static const std::string USER_MESSAGE_LOGIN_SUCCESS;
 		static const std::string USER_MESSAGE_COMPOSE_SUCCESS;
 
-
+		/***********************************************
+		 * Prefix of data in GET_MAIL command (to add) *
+		 ***********************************************/
 		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_FROM;
 		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_TO;
 		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_SUBJECT;
