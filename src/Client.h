@@ -6,6 +6,7 @@
 
 #include "Utils/Socket.h"
 #include "Utils/Packet.h"
+#include "Utils/Common.h"
 
 
 class Client
@@ -48,9 +49,13 @@ class Client
 		 *
 		 * @return: On success true, On failure false (result holds the error)
 		 */
-		bool parseGeneralResponse(long commandType,
+		GeneralRespondStatuses parseGeneralResponse(long commandType,
 										Packet& pack,
 										std::string& result);
+
+
+		bool convertFromGeneralResMessageIdToString(GeneralRespondStatuses messageIdGeneralRes,
+				std::string& result);
 
 		/****
 		 * Print *output* to the user console

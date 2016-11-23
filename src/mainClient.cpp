@@ -7,7 +7,7 @@
 #define DEFAULT_PORT (6423)
 
 
-int mainb (int argc, char ** argv)
+int main (int argc, char ** argv)
 {
 	std::string remoteHost(DEFAULT_HOST);
 	u_int16_t remotePort = DEFAULT_PORT;

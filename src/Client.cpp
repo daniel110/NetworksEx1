@@ -48,6 +48,8 @@ void Client::start()
 		return;
 	}
 
+	/* TODO: add recv welcome message */
+
 
 	bool keepGoing = true;;
 	std::string resultStr;
@@ -218,16 +220,22 @@ bool Client::commandLogin(std::string& result)
 
 	/* parse respond */
 	std::string resMessage;
-	if (false == parseGeneralResponse(commandType,
-										resPacket,
-										resMessage))
+
+	GeneralRespondStatuses stat = parseGeneralResponse(commandType,
+																resPacket,
+																resMessage);
+	if (GENERAL_RESPOND_UNKNOWN_STATUS == stat)
 	{
 		result += "Error on parsing response " + resMessage;
 		return false;
 	}
 
-	if (0 != resMessage.compare(Common::GENERAL_RESPONSE_SUCCUSS_MESSAGE))
+	if (GENERAL_RESPOND_STATUS_SUCCESS != stat)
 	{
+		/* return value is not relevant  */
+		convertFromGeneralResMessageIdToString(stat,
+												resMessage);
+
 		result += resMessage;
 		return false;
 	}
@@ -269,12 +277,26 @@ bool Client::commandShowInbox(std::string& result)
 
 	if (COMMANDTYPE_SHOW_INBOX_RES != commandType)
 	{
-		if (false == parseGeneralResponse(commandType,
-											resPacket,
-											result))
+		std::string resMessage;
+
+		GeneralRespondStatuses stat = parseGeneralResponse(commandType,
+																	resPacket,
+																	resMessage);
+		if (GENERAL_RESPOND_UNKNOWN_STATUS == stat)
 		{
+			result += "Error on parsing response " + resMessage;
 			return false;
 		}
+
+		if (false == convertFromGeneralResMessageIdToString(stat,
+												resMessage))
+		{
+			result += resMessage;
+			return false;
+		}
+
+		result += resMessage;
+		return true;
 	}
 
 	/********************************************
@@ -335,12 +357,27 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 
 	if (COMMANDTYPE_GET_MAIL_RES != commandType)
 	{
-		if (false == parseGeneralResponse(commandType,
-											resPacket,
-											result))
+		std::string resMessage;
+
+		GeneralRespondStatuses stat = parseGeneralResponse(commandType,
+																	resPacket,
+																	resMessage);
+		if (GENERAL_RESPOND_UNKNOWN_STATUS == stat)
 		{
+			result += "Error on parsing response " + resMessage;
 			return false;
 		}
+
+
+		if (false == convertFromGeneralResMessageIdToString(stat,
+												resMessage))
+		{
+			result += resMessage;
+			return false;
+		}
+
+		result += resMessage;
+		return true;
 	}
 
 	/********************************************
@@ -445,18 +482,27 @@ bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 
 	/* parse respond */
 	std::string resMessage;
-	if (false == parseGeneralResponse(commandType,
-										resPacket,
-										resMessage))
+
+	GeneralRespondStatuses stat = parseGeneralResponse(commandType,
+																resPacket,
+																resMessage);
+	if (GENERAL_RESPOND_UNKNOWN_STATUS == stat)
 	{
 		result += "Error on parsing response " + resMessage;
 		return false;
 	}
 
-	if (0 != resMessage.compare(Common::GENERAL_RESPONSE_SUCCUSS_MESSAGE))
+	if (GENERAL_RESPOND_STATUS_SUCCESS != stat)
 	{
+		if (false == convertFromGeneralResMessageIdToString(stat,
+												resMessage))
+		{
+			result += resMessage;
+			return false;
+		}
+
 		result += resMessage;
-		return false;
+		return true;
 	}
 
 	result.clear();
@@ -471,14 +517,13 @@ bool Client::commandQuit(std::string& result)
 bool Client::commandCompose(std::string& result)
 {
 	result = "Failed on compose mail: ";
-	bool keepGoing = true;
 
 	std::string toFeild;
 	if (false == receiveUserCommandArg(PREFIX_INPUT_TO,
 											toFeild))
 	{
 		result += toFeild;
-		return keepGoing;
+		return true;
 	}
 	/* parse subject from input */
 	std::string subjectFeild;
@@ -486,7 +531,7 @@ bool Client::commandCompose(std::string& result)
 											subjectFeild))
 	{
 		result += subjectFeild;
-		return keepGoing;
+		return true;
 	}
 	/* parse password name from input */
 	std::string textFeild;
@@ -494,7 +539,7 @@ bool Client::commandCompose(std::string& result)
 											textFeild))
 	{
 		result += textFeild;
-		return keepGoing;
+		return true;
 	}
 
 	/***************
@@ -532,39 +577,68 @@ bool Client::commandCompose(std::string& result)
 
 	/* parse respond */
 	std::string resMessage;
-	if (false == parseGeneralResponse(commandType,
-										resPacket,
-										resMessage))
+
+	GeneralRespondStatuses stat = parseGeneralResponse(commandType,
+																resPacket,
+																resMessage);
+	if (GENERAL_RESPOND_UNKNOWN_STATUS == stat)
 	{
 		result += "Error on parsing response " + resMessage;
 		return false;
 	}
 
-	if (0 != resMessage.compare(Common::GENERAL_RESPONSE_SUCCUSS_MESSAGE))
+	if (GENERAL_RESPOND_STATUS_SUCCESS != stat)
 	{
+		if (false == convertFromGeneralResMessageIdToString(stat,
+												resMessage))
+		{
+			result += resMessage;
+			return false;
+		}
+
 		result += resMessage;
-		return keepGoing;
+		return true;
 	}
 
 	result = USER_MESSAGE_COMPOSE_SUCCESS;
 	return true;
 }
 
-bool Client::parseGeneralResponse( long commandType,
+GeneralRespondStatuses Client::parseGeneralResponse( long commandType,
 									Packet& pack,
 									std::string& result)
 {
 	if (COMMANDTYPE_GENERAL_MESSAGE != commandType)
 	{
 		result += "Got wrong type response\n";
-		return false;
+		return GENERAL_RESPOND_UNKNOWN_STATUS;
 	}
 
-	if (false == pack.readForwardStringField(result))
+	long int messageIdGeneralRes;
+	if (false == pack.readForwardDWord(messageIdGeneralRes))
 	{
 		result += "Failed reading respond\n";
-		return false;
+		return GENERAL_RESPOND_UNKNOWN_STATUS;
 	}
+
+
+	return (GeneralRespondStatuses)messageIdGeneralRes;
+}
+
+bool Client::convertFromGeneralResMessageIdToString(GeneralRespondStatuses messageIdGeneralRes,
+															std::string& result)
+{
+	switch(messageIdGeneralRes)
+	{
+
+	/*TODO: added message */
+
+	default:
+		result += "Unknown general message id\n";
+		return false;
+
+	}
+
 
 	return true;
 }
