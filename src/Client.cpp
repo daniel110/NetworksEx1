@@ -333,7 +333,7 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 		return false;
 	}
 
-	if (COMMANDTYPE_GET_MAIL_REQ != commandType)
+	if (COMMANDTYPE_GET_MAIL_RES != commandType)
 	{
 		if (false == parseGeneralResponse(commandType,
 											resPacket,
