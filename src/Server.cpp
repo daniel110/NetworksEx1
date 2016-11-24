@@ -5,12 +5,288 @@
 #include <unistd.h>         // close / read / write / lseek
 #include <stdio.h>
 
+Server::Server(uint16_t port)
+{
+	int res = listener.create();
 
-bool server::loadUsersFromFile(char * filePatch)
+	if (Socket::RES_SUCCESS == res)
+	{
+		res = listener.bind(Socket::ANY_IP, port);
+		if (Socket::RES_SUCCESS == res)
+		{
+			m_state = SERVER_INITIATED;
+			return;
+		}
+	}
+
+	printSocketError(res);
+	m_state = SERVER_LISTEN_SOCKET_ERROR;
+}
+
+void Server::start()
+{
+
+	FDSet sockets;
+	Socket new_conection;
+	int socket_res = 0;
+
+	std::list<ServerSessionSocket*>::iterator it_begin;
+	std::list<ServerSessionSocket*>::iterator it_end;
+	std::list<ServerSessionSocket*>::iterator it;
+
+	socket_res = listener.listen(MAX_CONNECTIONS);
+	if (Socket::RES_SUCCESS != socket_res)
+	{
+		printSocketError(socket_res);
+		m_state = SERVER_LISTEN_SOCKET_ERROR;
+		return;
+	}
+
+	while (true)
+	{
+		sockets.clear();
+
+		sockets.add(listener);
+
+		it_begin = m_sessions.begin();
+		it_end = m_sessions.end();
+		for (it = it_begin;
+				it != it_end;
+				++it)
+		{
+			ServerSessionSocket * session = *it;
+			sockets.add(*session);
+			sessionWelcome(*session);
+		}
+
+		sockets.waitOnSockets();
+
+		if (true == sockets.check(listener))
+		{
+			socket_res = listener.accept(new_conection);
+			if (Socket::RES_SUCCESS != socket_res)
+			{
+				printSocketError(socket_res);
+				m_state = SERVER_LISTEN_SOCKET_ERROR;
+				return;
+			}
+
+			ServerSessionSocket * new_session = new ServerSessionSocket(new_conection);
+			m_sessions.push_back(new_session);
+		}
+
+		it_begin = m_sessions.begin();
+		it_end = m_sessions.end();
+		for (it = it_begin;
+				it != it_end;
+				++it)
+		{
+			ServerSessionSocket * session = *it;
+
+			if (true == sockets.check(*session))
+			{
+				processRequset(*session);
+				if (session->isValid() == false)
+				{
+					delete session;
+					m_sessions.erase(it);
+				}
+			}
+		} /* session iterator */
+
+	} /* while true */
+}
+
+void Server::sessionWelcome(ServerSessionSocket& session)
+{
+	Packet welcom;
+	welcom.writeForwardDWord(COMMANDTYPE_WELCOME_RES);
+	std::string message = "Welcome! I am simple-mail-server.";
+	welcom.writeForwardStringField(message);
+	session.sendMessage(welcom);
+}
+
+void Server::sessionLogin(ServerSessionSocket& session)
+{
+	Packet message;
+	Packet response;
+	int32_t type;
+	std::string user_field;
+	std::string pass_field;
+	Inbox * inbox = nullptr;
+	bool read_res = false;
+
+	/* Get a message from the client */
+	if (Socket::RES_SUCCESS != session.recvMessage(message))
+	{
+		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
+		response.writeForwardDWord(GENERAL_RESPOND_STATUS_SESSION_FAILURE);
+		session.sendMessage(response);
+		session.close();
+		return;
+	}
+
+	/* Read the type of the message */
+	read_res = message.readForwardDWord(type);
+	if (read_res != true)
+	{
+		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
+		response.writeForwardDWord(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		session.sendMessage(response);
+		return;
+	}
+
+	/* Check type of message to be login request.
+	 * All sessions that are not logged in must send login message first.
+	 */
+	if (type != COMMANDTYPE_LOGIN_REQ)
+	{
+		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
+		response.writeForwardDWord(GENERAL_RESPOND_STATUS_NOT_LOGOED_IN);
+		session.sendMessage(response);
+		return;
+	}
+
+	/* Read user name field */
+	read_res = message.readForwardStringField(user_field);
+	if (read_res != true)
+	{
+		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
+		response.writeForwardDWord(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		session.sendMessage(response);
+		return;
+	}
+
+	/* Read password field */
+	read_res = message.readForwardStringField(pass_field);
+	if (read_res != true)
+	{
+		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
+		response.writeForwardDWord(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		session.sendMessage(response);
+		return;
+	}
+
+	/* Try to find the inbox with this user name and password */
+	inbox = getInboxFromUserString(user_field, pass_field);
+	if (inbox == nullptr)
+	{
+		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
+		response.writeForwardDWord(GENERAL_RESPOND_STATUS_UNKNOWN_USER);
+		session.sendMessage(response);
+		return;
+	}
+
+	/* Check if the user already checked in */
+	if (inbox->loged_in == true)
+	{
+		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
+		response.writeForwardDWord(GENERAL_RESPOND_STATUS_USER_ALREADY_LOGGEDON);
+		session.sendMessage(response);
+		return;
+	}
+
+	/* Pair the inbox with the session and set the session to be logged in */
+	session.setInbox(inbox);
+	session.setState(StateMachineStep::STATE_LOGEDON);
+
+	/* Send success response */
+	response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
+	response.writeForwardDWord(GENERAL_RESPOND_STATUS_SUCCESS);
+	session.sendMessage(response);
+}
+
+void Server::processRequset(ServerSessionSocket& session)
+{
+
+	switch (session.getState())
+	{
+	case StateMachineStep::STATE_NON_AUTH:
+		sessionLogin(session);
+		break;
+	case StateMachineStep::STATE_LOGEDON:
+
+		break;
+	case StateMachineStep::STATE_SHOWINBOX:
+
+		break;
+	case StateMachineStep::STATE_COMPOSE:
+
+		break;
+	case StateMachineStep::STATE_DELETEMAIL:
+
+		break;
+	case StateMachineStep::STATE_GETMAIL:
+
+		break;
+	case StateMachineStep::STATE_QUIT:
+
+		break;
+	}
+}
+
+
+Inbox * Server::getInboxFromUserString(const std::string& user, const std::string& pass)
+{
+	std::list<Inbox*>::iterator it_begin;
+	std::list<Inbox*>::iterator it_end;
+	std::list<Inbox*>::iterator it;
+
+
+	it_begin = m_all_inbox.begin();
+	it_end = m_all_inbox.end();
+	for (it = it_begin;
+			it != it_end;
+			++it)
+	{
+		Inbox * inbox = *it;
+
+		if (inbox->getUser().getUserName() == user)
+		{
+			if (inbox->getUser().isPassCorrect(pass))
+			{
+				return inbox;
+			}
+			else
+			{
+				return nullptr;
+			}
+
+		}
+
+	}
+
+	return nullptr;
+}
+
+
+
+
+bool Server::printSocketError(int result)
+{
+	std::string error;
+	Socket::fromSocketResultToErrorString(result, error);
+
+	return printStringToUser(error.c_str());
+}
+
+bool Server::printStringToUser(const char* output)
+{
+	return Common::cmnPrintStringToUser(output);
+}
+
+bool Server::recvLineFromUser(std::string& input)
+{
+	return Common::cmnRecvLineFromUser(input);
+}
+
+
+bool Server::loadUsersFromFile(char * filePatch)
 {
 	std::list<User*> * user_list = getUsersFromFile(filePatch);
 	if (user_list == nullptr)
 	{
+		m_state = SERVER_USERFILE_ERROR;
 		return false;
 	}
 
@@ -20,17 +296,18 @@ bool server::loadUsersFromFile(char * filePatch)
 
 	clearSessionList();
 
+	m_state = SERVER_READY_TO_LISTEN;
 	return true;
 }
 
-User * server::getUserFromLine(char * buf, int size)
+User * Server::getUserFromLine(char * buf, int size)
 {
 	std::string user;
 	std::string pass;
 	char * ptr_start = buf;
 	char * ptr_cur = buf;
 
-	if (buf == NULL)
+	if (buf == nullptr)
 	{
 		return nullptr;
 	}
@@ -64,7 +341,7 @@ User * server::getUserFromLine(char * buf, int size)
 	return new User(user, pass);
 }
 
-std::list<User*> * server::getUsersFromFile(char * filePatch)
+std::list<User*> * Server::getUsersFromFile(char * filePatch)
 {
 	FILE * hdl_input = 0;
 	char * buf = NULL;
@@ -87,7 +364,7 @@ std::list<User*> * server::getUsersFromFile(char * filePatch)
     {
 
     	User * nuser = getUserFromLine(buf, buf_len);
-    	if (nuser == NULL)
+    	if (nuser == nullptr)
     	{
     		break;
     	}
@@ -104,7 +381,7 @@ std::list<User*> * server::getUsersFromFile(char * filePatch)
     return user_list;
 }
 
-void server::clearInboxList()
+void Server::clearInboxList()
 {
 	Inbox * cur_inbox = nullptr;
 
@@ -119,7 +396,7 @@ void server::clearInboxList()
 
 }
 
-void server::clearSessionList()
+void Server::clearSessionList()
 {
 	ServerSessionSocket * cur_session = nullptr;
 
@@ -135,7 +412,7 @@ void server::clearSessionList()
 	}
 }
 
-void server::createInboxList(std::list<User*>& users)
+void Server::createInboxList(std::list<User*>& users)
 {
 	User * cur_user = nullptr;
 	Inbox * nInbox = nullptr;
