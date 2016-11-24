@@ -25,7 +25,7 @@ const std::string Client::PREFIX_MAIL_DATA_ON_GET_MAIL_TO = "To: ";
 const std::string Client::PREFIX_MAIL_DATA_ON_GET_MAIL_SUBJECT = "Subject: ";
 const std::string Client::PREFIX_MAIL_DATA_ON_GET_MAIL_TEXT = "Text: ";
 
-const unsigned int Client::MAX_USER_INPUT_LINE = 2000;
+
 
 
 const std::string Client::USER_MESSAGE_LOGIN_SUCCESS = "Connected to server\n";
@@ -211,7 +211,7 @@ bool Client::commandLogin(std::string& result)
 		return false;
 	}
 
-	long commandType;
+	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
 		result = "Unable to read command type\n";
@@ -268,7 +268,7 @@ bool Client::commandShowInbox(std::string& result)
 	/**********************
 	 * Check command type *
 	 **********************/
-	long commandType;
+	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
 		result = "Unable to read command type\n";
@@ -348,7 +348,7 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 	/**********************
 	 * Check command type *
 	 **********************/
-	long commandType;
+	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
 		result = "Unable to read command type\n";
@@ -473,7 +473,7 @@ bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 	/**********************
 	 * Check command type *
 	 **********************/
-	long commandType;
+	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
 		result = "Unable to read command type\n";
@@ -568,7 +568,7 @@ bool Client::commandCompose(std::string& result)
 	/**********************
 	 * Check command type *
 	 **********************/
-	long commandType;
+	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
 		result = "Unable to read command type\n";
@@ -614,7 +614,7 @@ GeneralRespondStatuses Client::parseGeneralResponse( long commandType,
 		return GENERAL_RESPOND_UNKNOWN_STATUS;
 	}
 
-	long int messageIdGeneralRes;
+	int32_t messageIdGeneralRes;
 	if (false == pack.readForwardDWord(messageIdGeneralRes))
 	{
 		result += "Failed reading respond\n";
@@ -646,27 +646,13 @@ bool Client::convertFromGeneralResMessageIdToString(GeneralRespondStatuses messa
 
 bool Client::printStringToUser(const char* output)
 {
-	std::cout << output << std::endl;
-	if (std::cout.fail())
-	{
-		return false;
-	}
-
-	return true;
+	return Common::cmnPrintStringToUser(output);
 }
 
 
 bool Client::recvLineFromUser(std::string& input)
 {
-	char buf[MAX_USER_INPUT_LINE];
-
-	if (NULL == std::fgets(buf, MAX_USER_INPUT_LINE, stdin))
-	{
-		return false;
-	}
-
-	input = buf;
-	return true;
+	return Common::cmnRecvLineFromUser(input);
 }
 
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <sstream>
+#include <iostream>
 
 enum CommandTypes
 {
@@ -23,12 +25,17 @@ enum GeneralRespondStatuses
 
 	GENERAL_RESPOND_STATUS_SUCCESS = 0,
 	GENERAL_RESPOND_STATUS_UNKNOWN_USER = 1,
-	GENERAL_RESPOND_STATUS_WRONG_PASS = 2,
+	//GENERAL_RESPOND_STATUS_WRONG_PASS = 2,
 	GENERAL_RESPOND_STATUS_NOT_LOGOED_IN = 3,
 	GENERAL_RESPOND_STATUS_UNKNOWN_MAIL_ID = 4,
+	GENERAL_RESPOND_STATUS_USER_ALREADY_LOGGEDON = 5,
 
 	GENERAL_RESPOND_STATUS_INTERNAL_FAILURE = 10,
 	GENERAL_RESPOND_STATUS_FATAL_ERROR = 11,
+	GENERAL_RESPOND_STATUS_UNVALID_MESSAGE = 12,
+	GENERAL_RESPOND_STATUS_SESSION_FAILURE = 13,
+
+
 };
 
 class Common
@@ -36,5 +43,10 @@ class Common
 
 public:
 	static const std::string GENERAL_RESPONSE_SUCCUSS_MESSAGE;
+
+	static const unsigned int MAX_USER_INPUT_LINE = 2000;
+
+	static bool cmnPrintStringToUser(const char* output);
+	static bool cmnRecvLineFromUser(std::string& input);
 
 };

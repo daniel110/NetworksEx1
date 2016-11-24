@@ -24,8 +24,8 @@ public:
 	bool allocateForward(unsigned long more);
 	bool writeForward(const char * buf, unsigned len);
 	bool writeForward(const std::string& str);
-	bool writeForwardDWord(long value);
-	bool readForwardDWord(long& output);
+	bool writeForwardDWord(int32_t value);
+	bool readForwardDWord(int32_t& output);
 	bool readForward(char * dst, unsigned long len);
 	bool readForwardString(std::string& out, unsigned long length);
 

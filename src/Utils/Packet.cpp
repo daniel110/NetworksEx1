@@ -32,7 +32,7 @@ bool Packet::writeForwardStringField(const std::string& str)
 
 bool Packet::readForwardStringField(std::string& str)
 {
-	long length = 0;
+	int32_t length = 0;
 
 	if ((false == readForwardDWord(length)) || (length <= 0) || (length > MAX_FIELD_LENGTH))
 	{
@@ -88,7 +88,7 @@ bool Packet::writeForward(const std::string& str)
 	return writeForward(str.c_str(), str.size() + 1);
 }
 
-bool Packet::writeForwardDWord(long value)
+bool Packet::writeForwardDWord(int32_t value)
 {
 	if (true == allocateForward(sizeof(value)))
 	{
@@ -100,7 +100,7 @@ bool Packet::writeForwardDWord(long value)
 }
 
 
-bool Packet::readForwardDWord(long& output)
+bool Packet::readForwardDWord(int32_t& output)
 {
 	if (bytesLeft() >= sizeof(long))
 	{

@@ -12,6 +12,9 @@
 class Client
 {
 	public:
+
+		static const long DEFAULT_PORT = 6423;
+
 		/***
 		 * Ctor - get hostname and port of the server
 		 */
@@ -130,8 +133,6 @@ class Client
 		static const std::string PREFIX_INPUT_SUBJECT;
 		static const std::string PREFIX_INPUT_TEXT;
 
-
-		static const unsigned int MAX_USER_INPUT_LINE;
 
 		/*****************
 		 * User messages *
