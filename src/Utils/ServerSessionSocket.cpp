@@ -62,6 +62,7 @@ ServerSessionSocket::~ServerSessionSocket()
 	{
 		m_inbox->loged_in = false;
 	}
+	/* TODO: call Socket destructor?? */
 }
 
 
