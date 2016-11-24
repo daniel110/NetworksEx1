@@ -42,7 +42,7 @@ void Client::start()
 {
 	int res = 0;
 	res = m_sock.connect(m_hostname, m_port);
-	if (RES_INVALID_ADDRESS == res)
+	if (Socket::RES_INVALID_ADDRESS == res)
 	{
 		printStringToUser("Invalid Hostname Address\n");
 		return;
@@ -735,7 +735,7 @@ bool Client::sendCommandAndLogSocketError(Packet& pack,
 {
 	/* send packet */
 	int res = m_sock.sendMessage(pack);
-	if (RES_SUCCESS != res)
+	if (Socket::RES_SUCCESS != res)
 	{
 		std::string socketErr;
 		Socket::fromSocketResultToErrorString(res, socketErr);
@@ -754,7 +754,7 @@ bool Client::receiveRespondAndLogSocketError(Packet& pack,
 {
 	/* send packet */
 	int res = m_sock.recvMessage(pack);
-	if (RES_SUCCESS != res)
+	if (Socket::RES_SUCCESS != res)
 	{
 		std::string socketErr;
 		Socket::fromSocketResultToErrorString(res, socketErr);

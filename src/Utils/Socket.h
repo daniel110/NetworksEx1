@@ -6,21 +6,6 @@
 
 typedef int socket_handle;
 
-enum socketError
-{
-	RES_BAD_MESSAGE_FORMAT = -700,
-	RES_FAILED_RECEIVING_ALL_DATA = -601,
-	RES_FAILED_SENDING_ALL_DATA = -600,
-	RES_ACCEPT_INVALID_SOCKET_ERROR = -556,
-	RES_INVALID_SOCKET_ERROR = -555,
-	RES_INVALID_ADDRESS = -501,
-	RES_INVALID_IP_ADDRESS = -500,
-	RES_ALLOCATION_FAILED = -100,
-	RES_SOCKET_GENERAL_FAILURE = -1,
-
-	RES_SUCCESS = 0,
-};
-
 /***
  * Socket class is a wrapper for socket linux api
  *
@@ -35,6 +20,28 @@ class Socket
 {
 
     public:
+
+		enum socketError
+		{
+			RES_BAD_MESSAGE_FORMAT = -700,
+			RES_FAILED_RECEIVING_ALL_DATA = -601,
+			RES_FAILED_SENDING_ALL_DATA = -600,
+			RES_ACCEPT_INVALID_SOCKET_ERROR = -556,
+			RES_INVALID_SOCKET_ERROR = -555,
+			RES_INVALID_ADDRESS = -501,
+			RES_INVALID_IP_ADDRESS = -500,
+			RES_ALLOCATION_FAILED = -100,
+			RES_SOCKET_GENERAL_FAILURE = -1,
+			RES_PACKET_TOO_LONG = -502,
+
+			RES_SUCCESS = 0,
+		};
+
+		/* Length field type */
+		typedef uint32_t length_field_t;
+		static const length_field_t MAX_PACKET_LENGTH = 0xFFFF;
+
+
 		/****
 		 * Ctors: empty or gets socket handle
 		 */

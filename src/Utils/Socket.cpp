@@ -202,29 +202,22 @@ int Socket::recvMessage(Packet& packet) const
 		return RES_INVALID_SOCKET_ERROR;
 	}
 
-	int sizeOfPacketLen = sizeof(long);
-
-	char* buf = new (std::nothrow) char[sizeOfPacketLen];
-	if (0 == buf)
-	{
-		return RES_ALLOCATION_FAILED;
-	}
+	length_field_t messageSize = 0;
 
 	int readSize = ::recv(m_socketfd,
-							(void *)buf,
-							sizeOfPacketLen,
+							(void *)&messageSize,
+							sizeof(messageSize),
 							0);
 
-	if (readSize != sizeOfPacketLen)
+	if (readSize != sizeof(messageSize))
 	{
-		delete[] buf;
 		return RES_BAD_MESSAGE_FORMAT;
 	}
 
-	long messageSize;
-	memcpy(&messageSize, buf, sizeOfPacketLen);
-
-	delete[] buf;
+	if (readSize > MAX_PACKET_LENGTH)
+	{
+		return RES_PACKET_TOO_LONG;
+	}
 
 	int result = recv(packet, messageSize);
 
@@ -244,8 +237,14 @@ int Socket::recvMessage(Packet& packet) const
 
 int Socket::sendMessage(const Packet& packet) const
 {
-	long packetSize = packet.getSize();
-	if (packetSize != sendAll((char*)&packetSize , sizeof(long)))
+	length_field_t packetSize = packet.getSize();
+
+	if (packetSize > MAX_PACKET_LENGTH)
+	{
+		return RES_PACKET_TOO_LONG;
+	}
+
+	if (sizeof(packetSize) != sendAll((char*)&packetSize , sizeof(packetSize)))
 	{
 		return RES_FAILED_SENDING_ALL_DATA;
 	}
@@ -363,7 +362,11 @@ void Socket::fromSocketResultToErrorString(int result,
 			error = "Failed to allocate necessary memory";
 			break;
 		}
-
+		case RES_PACKET_TOO_LONG:
+		{
+			error = "Message size is too long";
+			break;
+		}
 		default:
 			error = "Unknown socket error";
 	}
