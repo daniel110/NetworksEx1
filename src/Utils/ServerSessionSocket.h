@@ -21,14 +21,17 @@ class ServerSessionSocket : public Socket
 {
     public:
 		ServerSessionSocket(socket_handle socketFd);
+		ServerSessionSocket(Socket& socket);
 		ServerSessionSocket();
+
+		~ServerSessionSocket();
 
         StateMachineStep getState();
         void setState(StateMachineStep value);
 
         void setInbox(Inbox* inbox);
         Inbox* getInbox();
-
+        void close();
 
     private:
         StateMachineStep m_state;

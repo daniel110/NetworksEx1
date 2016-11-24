@@ -24,7 +24,7 @@ bool Inbox::removeMail(unsigned long id)
 
 	for (std::list<MailObj*>::iterator it = m_mails.begin();
 			it != m_mails.end();
-			it++)
+			++it)
 	{
 		if (id == (*it)->m_id)
 		{
@@ -43,7 +43,7 @@ int Inbox::setShowInboxMails(Packet& showInboxPacket)
 	int result = 0;
 	for (std::list<MailObj*>::iterator it = m_mails.begin();
 			it != m_mails.end();
-			it++)
+			++it)
 	{
 		std::string mailRaw(fromMailToShowInboxRaw(*it));
 		showInboxPacket.writeForwardStringField(mailRaw);
