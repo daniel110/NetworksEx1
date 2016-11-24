@@ -12,6 +12,7 @@
 #include "Socket.h"
 #include "Packet.h"
 
+const std::string Socket::ANY_IP = "0.0.0.0";
 
 Socket::Socket(socket_handle socketfd) : m_socketfd(socketfd)
 {
@@ -214,12 +215,12 @@ int Socket::recvMessage(Packet& packet) const
 		return RES_BAD_MESSAGE_FORMAT;
 	}
 
-	if (readSize > MAX_PACKET_LENGTH)
+	if (messageSize > MAX_PACKET_LENGTH)
 	{
 		return RES_PACKET_TOO_LONG;
 	}
 
-	int result = recv(packet, messageSize);
+	long result = recv(packet, messageSize);
 
 	if (result < 0)
 	{
@@ -227,7 +228,7 @@ int Socket::recvMessage(Packet& packet) const
 		return result;
 	}
 
-	if (result != messageSize)
+	if (static_cast<length_field_t>(result) != messageSize)
 	{
 		return RES_FAILED_RECEIVING_ALL_DATA;
 	}
@@ -303,8 +304,6 @@ void Socket::setSocket(socket_handle socketfd)
 	close();
 	m_socketfd = socketfd;
 }
-
-
 
 void Socket::fromSocketResultToErrorString(int result,
 										std::string& error)

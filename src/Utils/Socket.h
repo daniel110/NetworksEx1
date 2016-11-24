@@ -21,6 +21,10 @@ class Socket
 
     public:
 
+		/* Allow it to access the private socket descriptor */
+		friend class FDSet;
+		friend class ServerSessionSocket;
+
 		enum socketError
 		{
 			RES_BAD_MESSAGE_FORMAT = -700,
@@ -41,6 +45,7 @@ class Socket
 		typedef uint32_t length_field_t;
 		static const length_field_t MAX_PACKET_LENGTH = 0xFFFF;
 
+		static const std::string ANY_IP;
 
 		/****
 		 * Ctors: empty or gets socket handle
@@ -193,10 +198,13 @@ class Socket
         static void fromSocketResultToErrorString(int result,
         										std::string& error);
 
+    protected:
+        socket_handle m_socketfd;
+
     private:
         static const int SOCKET_INVALID_DEFAULT = -1;
 
-		socket_handle m_socketfd;
+
 
 		/****
 		 *	connecting to the server
