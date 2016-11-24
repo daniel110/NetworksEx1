@@ -18,7 +18,7 @@ class User
         bool getUserAsPacket(Packet& pckt);
         bool setUserFromPacket(Packet& pct);
 
-        bool isPassCorrect(std::string& pass) const;
+        bool isPassCorrect(const std::string& pass) const;
 
         const std::string& getUserName() const;
 };

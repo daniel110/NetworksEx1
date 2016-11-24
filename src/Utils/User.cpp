@@ -47,7 +47,7 @@ bool User::setUserFromPacket(Packet& pct)
 }
 
 
-bool User::isPassCorrect(std::string& pass) const
+bool User::isPassCorrect(const std::string& pass) const
 {
 	return (pass == m_pass);
 }
