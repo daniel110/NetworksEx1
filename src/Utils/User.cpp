@@ -4,7 +4,7 @@
 User::User(	std::string& userName,
 			std::string& pass)
 {
-	this->init(m_userName, m_pass);
+	this->init(userName, pass);
 }
 
 User::User(const User& user)

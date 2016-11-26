@@ -42,7 +42,7 @@ class Socket
 		};
 
 		/* Length field type */
-		typedef uint32_t length_field_t;
+		typedef int length_field_t;
 		static const length_field_t MAX_PACKET_LENGTH = 0xFFFF;
 
 		static const std::string ANY_IP;

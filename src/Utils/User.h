@@ -12,6 +12,9 @@ class User
         		  const std::string& pass);
 
     public:
+        friend class Server;
+
+
         User(std::string& userName, std::string& pass);
         User(const User& user);
 

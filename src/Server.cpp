@@ -14,10 +14,14 @@ Server::Server(uint16_t port)
 		res = listener.bind(Socket::ANY_IP, port);
 		if (Socket::RES_SUCCESS == res)
 		{
+			printDebugLog("Listener initiated successfully.", DEBUGLEVEL::EVENTS);
 			m_state = SERVER_INITIATED;
 			return;
 		}
+		printDebugLog("Listener failed to bind.", DEBUGLEVEL::EVENTS);
 	}
+
+	printDebugLog("Listener failed get a socket.", DEBUGLEVEL::EVENTS);
 
 	printSocketError(res);
 	m_state = SERVER_LISTEN_SOCKET_ERROR;
@@ -226,6 +230,35 @@ void Server::processRequset(ServerSessionSocket& session)
 }
 
 
+void * Server::debugPrintUserList(std::list<User*>& list)
+{
+	std::list<User*>::iterator it_begin;
+	std::list<User*>::iterator it_end;
+	std::list<User*>::iterator it;
+	char buflog[1024];
+
+	sprintf(buflog, "%d Users loaded.", list.size());
+	printDebugLog(buflog, DEBUGLEVEL::INFO);
+
+	it_begin = list.begin();
+	it_end = list.end();
+	for (it = it_begin;
+			it != it_end;
+			++it)
+	{
+		User * user = *it;
+
+
+		sprintf(buflog, "%s - %s", user->m_userName.c_str(), user->m_pass.c_str());
+		printDebugLog(buflog, DEBUGLEVEL::INFO_MORE);
+
+
+	}
+
+	return nullptr;
+}
+
+
 Inbox * Server::getInboxFromUserString(const std::string& user, const std::string& pass)
 {
 	std::list<Inbox*>::iterator it_begin;
@@ -266,7 +299,6 @@ bool Server::printSocketError(int result)
 {
 	std::string error;
 	Socket::fromSocketResultToErrorString(result, error);
-
 	return printStringToUser(error.c_str());
 }
 
@@ -290,6 +322,8 @@ bool Server::loadUsersFromFile(char * filePatch)
 		return false;
 	}
 
+	debugPrintUserList(*user_list);
+
 	createInboxList(*user_list);
 
 	delete user_list;
@@ -302,8 +336,8 @@ bool Server::loadUsersFromFile(char * filePatch)
 
 User * Server::getUserFromLine(char * buf, int size)
 {
-	std::string user;
-	std::string pass;
+	std::string suser;
+	std::string spass;
 	char * ptr_start = buf;
 	char * ptr_cur = buf;
 
@@ -312,7 +346,7 @@ User * Server::getUserFromLine(char * buf, int size)
 		return nullptr;
 	}
 
-	while ((*ptr_cur != '\t') && ((ptr_cur - ptr_start) < size))
+	while ((*ptr_cur != '\r') && (*ptr_cur != '\n') && (*ptr_cur != '\t') && ((ptr_cur - ptr_start) < size))
 	{
 		ptr_cur++;
 	}
@@ -322,11 +356,14 @@ User * Server::getUserFromLine(char * buf, int size)
 		return nullptr;
 	}
 
-	user.assign(ptr_start, ptr_cur - ptr_start);
+	suser.assign(ptr_start, ptr_cur - ptr_start);
+
+	ptr_cur++;
+
 	size -= (ptr_cur - ptr_start);
 	ptr_start = ptr_cur;
 
-	while ((*ptr_cur != '\n') && ((ptr_cur - ptr_start) < size))
+	while ((*ptr_cur != '\r') && (*ptr_cur != '\n') && ((ptr_cur - ptr_start) < size))
 	{
 		ptr_cur++;
 	}
@@ -336,9 +373,9 @@ User * Server::getUserFromLine(char * buf, int size)
 		return nullptr;
 	}
 
-	pass.assign(ptr_start, ptr_cur - ptr_start);
+	spass.assign(ptr_start, ptr_cur - ptr_start);
 
-	return new User(user, pass);
+	return new User(suser, spass);
 }
 
 std::list<User*> * Server::getUsersFromFile(char * filePatch)
@@ -351,7 +388,7 @@ std::list<User*> * Server::getUsersFromFile(char * filePatch)
 
     /*  Get key file descriptor */
     hdl_input = fopen(filePatch, "r");
-    if (hdl_input < 0)
+    if (hdl_input == NULL)
     {
 		printf("Error opening user files: %s\n%s\n", strerror(errno), filePatch);
 		return nullptr;
@@ -374,9 +411,8 @@ std::list<User*> * Server::getUsersFromFile(char * filePatch)
     	read_count = getline(&buf, &buf_len, hdl_input);
     }
 
-
-    free(buf);
     fclose(hdl_input);
+    free(buf);
 
     return user_list;
 }

@@ -13,7 +13,7 @@ private:
 
 
 public:
-	const long MAX_FIELD_LENGTH = 1024;
+	static const long MAX_FIELD_LENGTH = 1024;
 
 	Packet();
 	virtual ~Packet();

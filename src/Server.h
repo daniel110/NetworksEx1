@@ -1,6 +1,8 @@
 #pragma once
 
 #include <list>
+#include <string>
+
 #include <string.h>
 
 #include "Utils/User.h"
@@ -40,6 +42,16 @@ class Server
         	return m_state;
         }
 
+        enum DEBUGLEVEL
+		{
+        	NO_LOG,
+			EVENTS,
+			INFO,
+			INFO_MORE,
+		};
+
+        DEBUGLEVEL debug_log = INFO_MORE;
+
     private:
         SERVER_STATE m_state;
         Socket listener;
@@ -48,6 +60,8 @@ class Server
 
 		//std::list<MailObj*>& getMailsBySender(std::string& userName);
         //std::list<MailObj*>& getMailsByReceiver(std::string& userName);
+
+
 
 		User * getUserFromLine(char * buf, int size);
 		std::list<User*> * getUsersFromFile(char * filePatch);
@@ -63,10 +77,20 @@ class Server
         void sessionWelcome(ServerSessionSocket& session);
         void sessionLogin(ServerSessionSocket& session);
 
+
         bool printSocketError(int result);
         bool printStringToUser(const char* output);
         bool recvLineFromUser(std::string& input);
 
+
+        void * debugPrintUserList(std::list<User*>& list);
+		void printDebugLog(const char * buf, DEBUGLEVEL type)
+		{
+			if (type <= debug_log)
+			{
+				printStringToUser(buf);
+			}
+		}
 
         /*  Creates and adds to the session list */
         ServerSessionSocket* createNewSessionSocket(socket_handle socketfd);
