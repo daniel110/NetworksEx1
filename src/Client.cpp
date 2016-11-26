@@ -26,10 +26,12 @@ const std::string Client::PREFIX_MAIL_DATA_ON_GET_MAIL_SUBJECT = "Subject: ";
 const std::string Client::PREFIX_MAIL_DATA_ON_GET_MAIL_TEXT = "Text: ";
 
 
+const std::string Client::USER_MESSAGE_LOGIN_SUCCESS = "Connected to server";
+const std::string Client::USER_MESSAGE_COMPOSE_SUCCESS = "Mail sent";
 
 
-const std::string Client::USER_MESSAGE_LOGIN_SUCCESS = "Connected to server\n";
-const std::string Client::USER_MESSAGE_COMPOSE_SUCCESS = "Mail sent\n";
+const std::string Client::ERROR_FAILED_TO_READ_USER_INPUT = "Unable to read command - Going down";
+const std::string Client::ERROR_FAILED_TO_EXTRACT_COMMAND_FROM_USER_INPUT = "Unable to extract command type";
 
 
 
@@ -40,37 +42,28 @@ Client::Client(std::string& hostname, u_int16_t port) : m_hostname(hostname)
 
 void Client::start()
 {
-	int res = 0;
-	res = m_sock.connect(m_hostname, m_port);
-	if (Socket::RES_INVALID_ADDRESS == res)
-	{
-		printStringToUser("Invalid Hostname Address\n");
-		return;
-	}
-
-	/* TODO: add recv welcome message */
-
-
-	bool keepGoing = true;;
 	std::string resultStr;
 
-	/* First and must operation: login user to server*/
-	keepGoing = commandLogin(resultStr);
-	if (false == keepGoing)
+	/**
+	 * initialize connection to server
+	 */
+	if (false == initServerConnection(resultStr))
 	{
-		printStringToUser(resultStr.c_str());
+		printStringToUserLine(resultStr);
 		return;
 	}
+
 
 	/******************************************
 	 * Mail Loop: receive and execute command *
 	 ******************************************/
+	bool keepGoing = true;
 	std::string input;
 	while (keepGoing)
 	{
 		if (false == recvLineFromUser(input))
 		{
-			printStringToUser("Unable to read command - Going down\n");
+			printStringToUserLine(ERROR_FAILED_TO_READ_USER_INPUT);
 			break;
 		}
 		std::basic_stringstream<char> inputStream(input);
@@ -80,14 +73,14 @@ void Client::start()
 		inputStream >> commandTypeName;
 		if (inputStream.fail() )
 		{
-			printStringToUser("Unable to extract command type\n");
+			printStringToUserLine(ERROR_FAILED_TO_EXTRACT_COMMAND_FROM_USER_INPUT);
 			continue;
 		}
 
 		/********************************
 		 * Call correct command handler *
 		 ********************************/
-		resultStr = "Got Extra arguments. Try command again.\n";
+		resultStr = "Got Extra arguments. Try command again.";
 
 		if (0 == commandTypeName.compare(COMMAND_SHOW_INBOX))
 		{
@@ -105,13 +98,13 @@ void Client::start()
 			/* check that the argument was really an int */
 			if (inputStream.fail() )
 			{
-				resultStr = "Unable to extract mail id.\n";
+				resultStr = "Unable to extract mail id.";
 			}
 			else
 			{
 				if (!inputStream.eof())
 				{
-					resultStr = "The second and last parameter of GET_MAIL should be int\n";
+					resultStr = "The second and last parameter of GET_MAIL should be int";
 				}
 				else
 				{
@@ -125,13 +118,13 @@ void Client::start()
 			inputStream >> id;
 			if (inputStream.fail() )
 			{
-				resultStr = "Unable to extract mail id.\n";
+				resultStr = "Unable to extract mail id.";
 			}
 			else
 			{
 				if (!inputStream.eof())
 				{
-					resultStr = "The second and last parameter of DELETE_MAIL should be int\n";
+					resultStr = "The second and last parameter of DELETE_MAIL should be int";
 				}
 				else
 				{
@@ -155,12 +148,12 @@ void Client::start()
 		}
 		else
 		{
-			resultStr = "Invalid command type name\n";
+			resultStr = "Invalid command type name";
 		}
 
 
 		/* log handler result */
-		if ( false == printStringToUser(resultStr.c_str()))
+		if ( false == printStringToUserLine(resultStr))
 		{
 			/* nothing to do, just exit */
 			keepGoing = false;
@@ -168,6 +161,92 @@ void Client::start()
 	}
 
 }
+
+bool Client::initServerConnection(std::string& result)
+{
+
+	int res = 0;
+	res = m_sock.connect(m_hostname, m_port);
+	if (Socket::RES_INVALID_ADDRESS == res)
+	{
+		result += "Invalid Hostname Address";
+		return false;
+	}
+
+	if (false == recvWelcomeMessage(result))
+	{
+		return false;
+	}
+
+	printStringToUserLine(result);
+
+
+	result.clear();
+	/* First and must operation: login user to server*/
+	if (false == commandLogin(result))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Client::recvWelcomeMessage(std::string& result)
+{
+	/* receive response packet */
+	Packet resPacket;
+	if (false == receiveRespondAndLogSocketError(resPacket,
+														result))
+	{
+		return false;
+	}
+
+
+	/**********************
+	 * Check command type *
+	 **********************/
+	int32_t commandType;
+	if (false == resPacket.readForwardDWord(commandType))
+	{
+		result = "Unable to read command type";
+		return false;
+	}
+
+	if (COMMANDTYPE_WELCOME_RES != commandType)
+	{
+		std::string resMessage;
+
+		GeneralRespondStatuses stat = parseGeneralResponse(commandType,
+																	resPacket,
+																	resMessage);
+		if (GENERAL_RESPOND_UNKNOWN_STATUS == stat)
+		{
+			result += "Error on parsing response " + resMessage;
+			return false;
+		}
+
+		if (false == convertFromGeneralResMessageIdToString(stat,
+												resMessage))
+		{
+			result += resMessage;
+			return false;
+		}
+
+		result += resMessage;
+		return false;
+	}
+
+
+	if (false == resPacket.readForwardStringField(result))
+	{
+		result += "Failed to read welcome message";
+		return false;
+	}
+
+	return true;
+}
+
+
 
 bool Client::commandLogin(std::string& result)
 {
@@ -214,7 +293,7 @@ bool Client::commandLogin(std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type\n";
+		result = "Unable to read command type";
 		return false;
 	}
 
@@ -271,7 +350,7 @@ bool Client::commandShowInbox(std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type\n";
+		result = "Unable to read command type";
 		return false;
 	}
 
@@ -307,11 +386,11 @@ bool Client::commandShowInbox(std::string& result)
 	{
 		if (false == resPacket.readForwardStringField(mailInfo))
 		{
-			result += "Failed to read next mail from packet\n";
+			result += "Failed to read next mail from packet";
 			return true;
 		}
 
-		if (false == printStringToUser(mailInfo.c_str()))
+		if (false == printStringToUserLine(mailInfo))
 		{
 			/* nothing to do, just exit */
 			result.clear();
@@ -351,7 +430,7 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type\n";
+		result = "Unable to read command type";
 		return false;
 	}
 
@@ -386,12 +465,12 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 	std::string mailInfo;
 	if (false == resPacket.readForwardStringField(mailInfo))
 	{
-		result += "Failed to read 'From' field\n";
+		result += "Failed to read 'From' field";
 		return true;
 	}
 
 	mailInfo = PREFIX_MAIL_DATA_ON_GET_MAIL_FROM + mailInfo;
-	if (false == printStringToUser(mailInfo.c_str()))
+	if (false == printStringToUserLine(mailInfo))
 	{
 		/* nothing to do, just exit */
 		result.clear();
@@ -400,12 +479,12 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 
 	if (false == resPacket.readForwardStringField(mailInfo))
 	{
-		result += "Failed to read 'To' field\n";
+		result += "Failed to read 'To' field";
 		return true;
 	}
 
 	mailInfo = PREFIX_MAIL_DATA_ON_GET_MAIL_TO + mailInfo;
-	if (false == printStringToUser(mailInfo.c_str()))
+	if (false == printStringToUserLine(mailInfo))
 	{
 		/* nothing to do, just exit */
 		result.clear();
@@ -415,12 +494,12 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 
 	if (false == resPacket.readForwardStringField(mailInfo))
 	{
-		result += "Failed to read 'Subject' field\n";
+		result += "Failed to read 'Subject' field";
 		return true;
 	}
 
 	mailInfo = PREFIX_MAIL_DATA_ON_GET_MAIL_SUBJECT + mailInfo;
-	if (false == printStringToUser(mailInfo.c_str()))
+	if (false == printStringToUserLine(mailInfo))
 	{
 		/* nothing to do, just exit */
 		result.clear();
@@ -430,12 +509,12 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 
 	if (false == resPacket.readForwardStringField(mailInfo))
 	{
-		result += "Failed to read 'Text' field\n";
+		result += "Failed to read 'Text' field";
 		return true;
 	}
 
 	mailInfo = PREFIX_MAIL_DATA_ON_GET_MAIL_TEXT + mailInfo;
-	if (false == printStringToUser(mailInfo.c_str()))
+	if (false == printStringToUserLine(mailInfo))
 	{
 		/* nothing to do, just exit */
 		result.clear();
@@ -476,7 +555,7 @@ bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type\n";
+		result = "Unable to read command type";
 		return false;
 	}
 
@@ -571,7 +650,7 @@ bool Client::commandCompose(std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type\n";
+		result = "Unable to read command type";
 		return false;
 	}
 
@@ -610,14 +689,14 @@ GeneralRespondStatuses Client::parseGeneralResponse( long commandType,
 {
 	if (COMMANDTYPE_GENERAL_MESSAGE != commandType)
 	{
-		result += "Got wrong type response\n";
+		result += "Got wrong type response";
 		return GENERAL_RESPOND_UNKNOWN_STATUS;
 	}
 
 	int32_t messageIdGeneralRes;
 	if (false == pack.readForwardDWord(messageIdGeneralRes))
 	{
-		result += "Failed reading respond\n";
+		result += "Failed reading respond";
 		return GENERAL_RESPOND_UNKNOWN_STATUS;
 	}
 
@@ -630,13 +709,57 @@ bool Client::convertFromGeneralResMessageIdToString(GeneralRespondStatuses messa
 {
 	switch(messageIdGeneralRes)
 	{
+		case GENERAL_RESPOND_STATUS_SUCCESS:
+		{
+			result += "Command executed successfully.";
+			break;
+		}
+		case GENERAL_RESPOND_STATUS_UNKNOWN_USER:
+		{
+			result += "Unknown user name.";
+			break;
+		}
+		case GENERAL_RESPOND_STATUS_NOT_LOGGED_IN:
+		{
+			result += "User is not logged in.";
+			break;
+		}
+		case GENERAL_RESPOND_STATUS_UNKNOWN_MAIL_ID:
+		{
+			result += "Unknown mail id.";
+			break;
+		}
+		case GENERAL_RESPOND_STATUS_USER_ALREADY_LOGGEDON:
+		{
+			result += "User is already logged on.";
+			break;
+		}
+		case GENERAL_RESPOND_STATUS_INTERNAL_FAILURE:
+		{
+			result += "Server internal error - try command again.";
+			break;
+		}
+		case GENERAL_RESPOND_STATUS_FATAL_ERROR:
+		{
+			result += "Server had a fatal error and it had to go down - going down.";
+			break;
+		}
+		case GENERAL_RESPOND_STATUS_UNVALID_MESSAGE:
+		{
+			result += "Server got unknown command - try different command.";
+			break;
+		}
+		case GENERAL_RESPOND_STATUS_SESSION_FAILURE:
+		{
+			result += "Server connection error - going down.";
+			break;
+		}
 
-	/*TODO: added message */
-
-	default:
-		result += "Unknown general message id\n";
-		return false;
-
+		default:
+		{
+			result += "Unknown general message id.";
+			return false;
+		}
 	}
 
 
@@ -644,13 +767,14 @@ bool Client::convertFromGeneralResMessageIdToString(GeneralRespondStatuses messa
 }
 
 
-bool Client::printStringToUser(const char* output)
+bool Client::printStringToUserLine(const std::string& output) const
 {
-	return Common::cmnPrintStringToUser(output);
+	std::string outputLine(output + "\n");
+	return Common::cmnPrintStringToUser(outputLine.c_str());
 }
 
 
-bool Client::recvLineFromUser(std::string& input)
+bool Client::recvLineFromUser(std::string& input) const
 {
 	return Common::cmnRecvLineFromUser(input);
 }
@@ -662,7 +786,7 @@ bool Client::receiveUserCommandArg(const std::string& expectedPrefix,
 	std::string input;
 	if (false == recvLineFromUser(input))
 	{
-		data += "Error reading user data\n";
+		data += "Error reading user data";
 		return false;
 	}
 
@@ -688,7 +812,7 @@ bool Client::getStringFromInputWithPrefix(std::string& orgString,
 	inputStream >> prefix;
 	if (inputStream.fail())
 	{
-		data = "Bad info Format\n";
+		data = "Bad info Format";
 		return false;
 	}
 
@@ -703,13 +827,13 @@ bool Client::getStringFromInputWithPrefix(std::string& orgString,
 	inputStream >> data;
 	if (inputStream.fail())
 	{
-		data = "Bad info format - failed to extract data\n";
+		data = "Bad info format - failed to extract data";
 		return false;
 	}
 
 	if (!inputStream.eof())
 	{
-		data = "Bad info format - got extra parameter\n";
+		data = "Bad info format - got extra parameter";
 		return false;
 	}
 
@@ -727,7 +851,7 @@ bool Client::sendCommandAndLogSocketError(Packet& pack,
 		Socket::fromSocketResultToErrorString(res, socketErr);
 
 		error += "Error on sending command: " +
-					socketErr + "\n";
+					socketErr;
 
 		return false;
 	}
@@ -746,7 +870,7 @@ bool Client::receiveRespondAndLogSocketError(Packet& pack,
 		Socket::fromSocketResultToErrorString(res, socketErr);
 
 		error += "Error on receiving response: " +
-					socketErr + "\n";
+					socketErr;
 
 		return false;
 	}

@@ -31,6 +31,9 @@ class Client
 		u_int16_t m_port;
 
 
+		bool initServerConnection(std::string& result);
+
+		bool recvWelcomeMessage(std::string& welcomeMessage);
 		/************
 		 * commands *
 		 ************/
@@ -61,18 +64,18 @@ class Client
 				std::string& result);
 
 		/****
-		 * Print *output* to the user console
+		 * Print *output* to the user console (adds "\n")
 		 *
 		 * @return: On success true, On failure false (output holds the error)
 		 */
-		bool printStringToUser(const char* output);
+		bool printStringToUserLine(const std::string& output) const;
 
 		/****
 		 * set *input* with string from the console
 		 *
 		 * @return: On success true, On failure false (input holds the error)
 		 */
-		bool recvLineFromUser(std::string& input);
+		bool recvLineFromUser(std::string& input) const;
 
 		/****
 		 * 1) Uses recvLineFromUser to get user's input.
@@ -147,6 +150,13 @@ class Client
 		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_TO;
 		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_SUBJECT;
 		static const std::string PREFIX_MAIL_DATA_ON_GET_MAIL_TEXT;
+
+
+		/**********
+		 * Errors *
+		 **********/
+		static const std::string ERROR_FAILED_TO_READ_USER_INPUT;
+		static const std::string ERROR_FAILED_TO_EXTRACT_COMMAND_FROM_USER_INPUT;
 
 };
 
