@@ -167,11 +167,17 @@ bool Client::initServerConnection(std::string& result)
 
 	int res = 0;
 	res = m_sock.connect(m_hostname, m_port);
-	if (Socket::RES_INVALID_ADDRESS == res)
+	if (Socket::RES_SUCCESS != res)
 	{
-		result += "Invalid Hostname Address";
+		std::string socketErr;
+		Socket::fromSocketResultToErrorString(res, socketErr);
+
+		result += "Error on receiving response: " +
+					socketErr;
+
 		return false;
 	}
+
 
 	if (false == recvWelcomeMessage(result))
 	{
