@@ -4,12 +4,12 @@
 #include "Server.h"
 
 
-int maina (int argc, char ** argv)
+int main (int argc, char ** argv)
 {
 	uint16_t localPort = Server::DEFAULT_PORT;
 	char * users_file_path = nullptr;
 
-	if (argc == 0)
+	if (argc == 1)
 	{
 		printf("Usage: Server <Users File> [Port]\n");
 		return EXIT_FAILURE;
@@ -24,7 +24,6 @@ int maina (int argc, char ** argv)
 		localPort = atol(argv[2]);
 	}
 	/* do not care if we got extra parameters */
-
 
 	/* create and run client  */
 	Server server = Server(localPort);

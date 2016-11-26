@@ -6,7 +6,7 @@
 #define DEFAULT_HOST ("localhost")
 
 
-int main (int argc, char ** argv)
+int maina (int argc, char ** argv)
 {
 	std::string remoteHost(DEFAULT_HOST);
 	u_int16_t remotePort = Client::DEFAULT_PORT;
