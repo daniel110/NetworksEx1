@@ -53,6 +53,8 @@ void Client::start()
 		return;
 	}
 
+	/* Print that we are connected */
+	printStringToUserLine(resultStr);
 
 	/******************************************
 	 * Mail Loop: receive and execute command *

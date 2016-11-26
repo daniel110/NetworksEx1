@@ -62,7 +62,6 @@ void Server::start()
 		{
 			ServerSessionSocket * session = *it;
 			sockets.add(*session);
-			sessionWelcome(*session);
 		}
 
 		sockets.waitOnSockets();
@@ -83,6 +82,8 @@ void Server::start()
 
 			ServerSessionSocket * new_session = new ServerSessionSocket(new_conection);
 			m_sessions.push_back(new_session);
+
+			sessionWelcome(*new_session);
 		}
 
 		it_begin = m_sessions.begin();
@@ -199,6 +200,8 @@ void Server::sessionLogin(ServerSessionSocket& session)
 	/* Pair the inbox with the session and set the session to be logged in */
 	session.setInbox(inbox);
 	session.setState(StateMachineStep::STATE_LOGEDON);
+
+	printDebugLog("User logged in.", session, DEBUGLEVEL::INFO);
 
 	/* Send success response */
 	response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
@@ -467,8 +470,6 @@ void Server::createInboxList(std::list<User*>& users)
 		cur_user = users.back();
 		nInbox = new Inbox(*cur_user);
 		m_all_inbox.push_back(nInbox);
-
-		delete cur_user;
 
 		users.pop_back();
 	}

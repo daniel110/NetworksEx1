@@ -144,7 +144,7 @@ int Socket::sendAll(const char* buf, long size) const
 						(unsigned int) bytesLeft,
 						0);
 
-		if (-1 == readBytesCount)
+		if (0 >= readBytesCount)
 		{
 			return RES_SOCKET_GENERAL_FAILURE;
 		}
@@ -245,7 +245,7 @@ int Socket::sendMessage(const Packet& packet) const
 		return RES_PACKET_TOO_LONG;
 	}
 
-	if (sizeof(packetSize) != sendAll((char*)&packetSize , sizeof(packetSize)))
+	if (Socket::RES_SUCCESS != sendAll((char*)&packetSize , sizeof(packetSize)))
 	{
 		return RES_FAILED_SENDING_ALL_DATA;
 	}

@@ -93,15 +93,15 @@ class Server
 
 				if (session.getInbox() == nullptr)
 				{
-					sprintf(buflog, "session: %d ", session.getID());
+					sprintf(buflog, "session %d: ", session.getID());
 				}
 				else
 				{
-					sprintf(buflog, "user: %s ", session.getInbox()->getUser().getUserName().c_str());
+					sprintf(buflog, "user %s: ", session.getInbox()->getUser().getUserName().c_str());
 				}
 
 				strcat(buflog, buf);
-				printStringToUser(buf);
+				printStringToUser(buflog);
 
 			}
 		}

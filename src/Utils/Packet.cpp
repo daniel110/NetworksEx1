@@ -16,6 +16,8 @@ Packet::~Packet()
 	{
 		delete[] m_buff;
 	}
+	m_len = 0;
+	m_cur = 0;
 }
 
 
@@ -38,8 +40,8 @@ bool Packet::readForwardStringField(std::string& str)
 	{
 		return false;
 	}
-	/* length contains null terminate. assign don't need it */
-	return readForwardString(str, length - 1);
+
+	return readForwardString(str, length);
 }
 
 unsigned long Packet::bytesLeft() const
@@ -85,6 +87,7 @@ bool Packet::writeForward(const char * buf, unsigned len)
 
 bool Packet::writeForward(const std::string& str)
 {
+	/* Include the null-terminate */
 	return writeForward(str.c_str(), str.size() + 1);
 }
 
@@ -92,7 +95,7 @@ bool Packet::writeForwardDWord(int32_t value)
 {
 	if (true == allocateForward(sizeof(value)))
 	{
-		*reinterpret_cast<long*>(m_buff + m_cur) = value;
+		*reinterpret_cast<int32_t*>(m_buff + m_cur) = value;
 		m_cur += sizeof(value);
 		return true;
 	}
@@ -102,10 +105,10 @@ bool Packet::writeForwardDWord(int32_t value)
 
 bool Packet::readForwardDWord(int32_t& output)
 {
-	if (bytesLeft() >= sizeof(long))
+	if (bytesLeft() >= sizeof(output))
 	{
-		output = *reinterpret_cast<long*>(m_buff + m_cur);
-		m_cur += sizeof(long);
+		output = *reinterpret_cast<int32_t*>(m_buff + m_cur);
+		m_cur += sizeof(output);
 		return true;
 	}
 	else
@@ -155,7 +158,8 @@ bool Packet::readForwardString(std::string& out, unsigned long length)
 		return false;
 	}
 
-	out.assign(m_buff + m_cur, length);
+	/* length contains null terminate. */
+	out.assign(m_buff + m_cur, length - 1);
 
 	m_cur += length;
 
