@@ -29,6 +29,8 @@ class ServerSessionSocket : public Socket
         StateMachineStep getState();
         void setState(StateMachineStep value);
 
+        int getID() const;
+
         void setInbox(Inbox* inbox);
         Inbox* getInbox();
         void close();

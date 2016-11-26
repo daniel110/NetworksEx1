@@ -46,6 +46,8 @@ void Server::start()
 		return;
 	}
 
+	printDebugLog("Server is listening...", DEBUGLEVEL::EVENTS);
+
 	while (true)
 	{
 		sockets.clear();
@@ -65,8 +67,12 @@ void Server::start()
 
 		sockets.waitOnSockets();
 
+		printDebugLog("Out of select.", DEBUGLEVEL::INFO);
+
 		if (true == sockets.check(listener))
 		{
+			printDebugLog("Got new client.", DEBUGLEVEL::EVENTS);
+
 			socket_res = listener.accept(new_conection);
 			if (Socket::RES_SUCCESS != socket_res)
 			{
@@ -202,6 +208,7 @@ void Server::sessionLogin(ServerSessionSocket& session)
 
 void Server::processRequset(ServerSessionSocket& session)
 {
+	printDebugLog("got message.", session, DEBUGLEVEL::EVENTS);
 
 	switch (session.getState())
 	{

@@ -31,6 +31,10 @@ void ServerSessionSocket::setState(StateMachineStep value)
 	m_state = value;
 }
 
+int ServerSessionSocket::getID() const
+{
+	return m_socketfd;
+}
 
 void ServerSessionSocket::setInbox(Inbox* inbox)
 {

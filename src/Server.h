@@ -84,7 +84,28 @@ class Server
 
 
         void * debugPrintUserList(std::list<User*>& list);
-		void printDebugLog(const char * buf, DEBUGLEVEL type)
+		void printDebugLog(const char * buf, ServerSessionSocket& session, DEBUGLEVEL type)
+		{
+			if (type <= debug_log)
+			{
+
+				char buflog[1024];
+
+				if (session.getInbox() == nullptr)
+				{
+					sprintf(buflog, "session: %d ", session.getID());
+				}
+				else
+				{
+					sprintf(buflog, "user: %s ", session.getInbox()->getUser().getUserName().c_str());
+				}
+
+				strcat(buflog, buf);
+				printStringToUser(buf);
+
+			}
+		}
+        void printDebugLog(const char * buf, DEBUGLEVEL type)
 		{
 			if (type <= debug_log)
 			{
