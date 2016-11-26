@@ -164,16 +164,21 @@ void Client::start()
 
 bool Client::initServerConnection(std::string& result)
 {
-
 	int res = 0;
+
+	if (Socket::RES_INVALID_SOCKET_ERROR == m_sock.create())
+	{
+		result += "Failed to create socket";
+		return false;
+	}
+
 	res = m_sock.connect(m_hostname, m_port);
 	if (Socket::RES_SUCCESS != res)
 	{
 		std::string socketErr;
 		Socket::fromSocketResultToErrorString(res, socketErr);
 
-		result += "Error on receiving response: " +
-					socketErr;
+		result += "Connection error: " + socketErr;
 
 		return false;
 	}
