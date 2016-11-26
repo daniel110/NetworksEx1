@@ -62,7 +62,7 @@ ServerSessionSocket::~ServerSessionSocket()
 	{
 		m_inbox->loged_in = false;
 	}
-	/* TODO: call Socket destructor?? */
+	/* TODO: call Socket destructor?? - DF: It is called automatically at destruction */
 }
 
 

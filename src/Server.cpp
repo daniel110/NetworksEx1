@@ -146,7 +146,7 @@ void Server::sessionLogin(ServerSessionSocket& session)
 	if (type != COMMANDTYPE_LOGIN_REQ)
 	{
 		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
-		response.writeForwardDWord(GENERAL_RESPOND_STATUS_NOT_LOGOED_IN);
+		response.writeForwardDWord(GENERAL_RESPOND_STATUS_NOT_LOGGED_IN);
 		session.sendMessage(response);
 		return;
 	}
