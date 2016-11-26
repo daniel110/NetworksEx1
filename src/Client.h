@@ -30,10 +30,22 @@ class Client
 		std::string& m_hostname;
 		u_int16_t m_port;
 
-
+		/****
+		 * Handle the initialization of the client-server communication
+		 * (calls recvWelcomeMessage - and print the welcome message to the user)
+		 *
+		 * @return: On success true, On failure false (result holds the error)
+		 */
 		bool initServerConnection(std::string& result);
 
-		bool recvWelcomeMessage(std::string& welcomeMessage);
+		/****
+		 * Set *result* with the welcome message sent by the server
+		 *
+		 * @return: On success true, On failure false (result holds the error)
+		 */
+		bool recvWelcomeMessage(std::string& result);
+
+
 		/************
 		 * commands *
 		 ************/
@@ -60,6 +72,11 @@ class Client
 										std::string& result);
 
 
+		/****
+		 * Convert from GeneralRespondStatus(enum) to textual status in *result*
+		 *
+		 * @return: On success true, On failure false (result holds the error)
+		 */
 		bool convertFromGeneralResMessageIdToString(GeneralRespondStatuses messageIdGeneralRes,
 				std::string& result);
 
