@@ -803,8 +803,7 @@ bool Client::printStringToUserLine(const std::string& output) const
 		return true;
 	}
 
-	std::string outputLine(output + "\n");
-	return Common::cmnPrintStringToUser(outputLine.c_str());
+	return Common::cmnPrintStringToUser(output.c_str());
 }
 
 
