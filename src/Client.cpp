@@ -797,6 +797,12 @@ bool Client::convertFromGeneralResMessageIdToString(GeneralRespondStatuses messa
 
 bool Client::printStringToUserLine(const std::string& output) const
 {
+	if (output.empty())
+	{
+		/* nothing to print */
+		return true;
+	}
+
 	std::string outputLine(output + "\n");
 	return Common::cmnPrintStringToUser(outputLine.c_str());
 }
