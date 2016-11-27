@@ -49,6 +49,14 @@ int maine()
 
 	in.removeMail(2);
 
+	MailObj obj4;
+	obj4.m_from = "Moshe4";
+	obj4.m_to = "Dan,Alina";
+	obj4.m_subject = "Check5";
+	obj4.m_body = "Bla Bla";
+
+	in.addMail(&obj4); /* id = 5 */
+
 
 	Packet pac;
 	in.setShowInboxMails(pac);
@@ -65,6 +73,8 @@ int maine()
 	pac.readForwardStringField(field);
 	std::cout << field << std::endl;
 
+	pac.readForwardStringField(field);
+	std::cout << field << std::endl;
 
 }
 
