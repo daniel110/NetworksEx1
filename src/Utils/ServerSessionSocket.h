@@ -8,14 +8,14 @@ enum StateMachineStep
 {
     STATE_NON_AUTH,
     STATE_LOGEDON,
-	STATE_SHOWINBOX,
-    STATE_GETMAIL,
-	STATE_DELETEMAIL,
-	STATE_COMPOSE,
+	//STATE_SHOWINBOX,
+    //STATE_GETMAIL,
+	//STATE_DELETEMAIL,
+	//STATE_COMPOSE,
 
 	/* At the current mail-server configuration, no need to use this state:
 	 * since after quit request - we destroy the session */
-	STATE_QUIT
+	//STATE_QUIT
 };
 
 class ServerSessionSocket : public Socket
