@@ -62,11 +62,7 @@ void ServerSessionSocket::close()
 
 ServerSessionSocket::~ServerSessionSocket()
 {
-	if (m_inbox != nullptr)
-	{
-		m_inbox->m_loggedIn = false;
-	}
-	/* TODO: call Socket destructor?? - DF: It is called automatically at destruction */
+	close();
 }
 
 

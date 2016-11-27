@@ -8,9 +8,22 @@ Inbox::Inbox(User& usr) : m_user(usr),
 							m_idOfLastMail(0) ,
 							m_loggedIn(false)
 {
-
+	// empty
 }
 
+Inbox::~Inbox()
+{
+	MailObj * cur_mail = nullptr;
+
+	while (m_mails.empty() == false)
+	{
+		cur_mail = m_mails.back();
+
+		delete cur_mail;
+
+		m_mails.pop_back();
+	}
+}
 void Inbox::addMail(MailObj* mail)
 {
 	MailObj* copyMail = new MailObj(*mail);
@@ -80,19 +93,6 @@ std::string Inbox::fromMailToShowInboxRaw(const MailObj* mail)
 	return showInboxRaw;
 }
 
-Inbox::~Inbox()
-{
-	MailObj * cur_mail = nullptr;
-
-	while (m_mails.empty() == false)
-	{
-		cur_mail = m_mails.back();
-
-		delete cur_mail;
-
-		m_mails.pop_back();
-	}
-}
 
 
 bool Inbox::isLogged()

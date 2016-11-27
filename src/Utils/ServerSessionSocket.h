@@ -20,19 +20,56 @@ enum StateMachineStep
 class ServerSessionSocket : public Socket
 {
     public:
+		/****
+		 * Ctor - Initialize Socket with *socketFd*
+		 */
 		ServerSessionSocket(socket_handle socketFd);
+
+		/****
+		 * Ctor - Initialize Socket with *socket*, and
+		 * 			make *socket* to be invalid
+		 */
 		ServerSessionSocket(Socket& socket);
+
+		/****
+		 * Ctor - default
+		 */
 		ServerSessionSocket();
 
+		/****
+		 * Close socket - call close;
+		 */
 		virtual ~ServerSessionSocket();
 
+		/****
+		 * return current state
+		 */
         StateMachineStep getState();
+
+        /****
+         * Update state to *value* state.
+         */
         void setState(StateMachineStep value);
 
+        /****
+         * get session unique id
+         */
         int getID() const;
 
+        /****
+         * Set inbox object and update that the inbox is now logged on
+         */
         void setInbox(Inbox* inbox);
+
+        /****
+         * return inbox object
+         */
         Inbox* getInbox();
+
+        /***
+         * Close socket and disassociate inbox from the session.
+         * From now on the object is not usable
+         */
         void close();
 
     private:
