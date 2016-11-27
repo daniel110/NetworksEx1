@@ -163,7 +163,13 @@ int Socket::send(const Packet& packet) const
 		return RES_INVALID_SOCKET_ERROR;
 	}
 
-	return sendAll(packet.getData(), packet.getSize());
+	char* data = packet.getData();
+	int res = sendAll(data, packet.getSize());
+
+	/* .getData() returns a copy */
+	delete[] data;
+
+	return res;
 }
 
 int Socket::recv(Packet& packet, unsigned short size) const

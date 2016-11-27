@@ -57,10 +57,13 @@ class Inbox
         bool m_loggedIn;
 
         /***
-         * Get *mail* object and return a string which represent
+         * Get *mail* object and set *showInboxRaw* with a string which represent
          * the mail as SHOW_INBOX
+         *
+         * @return	On success true, On Failure false
          */
-        std::string fromMailToShowInboxRaw(const MailObj* mail);
+        bool fromMailToShowInboxRaw(const MailObj* mail,
+        							std::string& showInboxRaw);
 
         /*********************************************
          * Constants for creating mail at SHOW_INBOX *
