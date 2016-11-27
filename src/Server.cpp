@@ -251,6 +251,8 @@ void Server::sessionRequestGetMail(ServerSessionSocket& session, Packet& message
 	Inbox * inbox = session.getInbox();
 	MailObj * mail = nullptr;
 
+	printDebugLog("sessionRequestGetMail", session, DEBUGLEVEL::EVENTS);
+
 	if (false == message.readForwardDWord(mail_id))
 	{
 		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
@@ -279,6 +281,8 @@ void Server::sessionRequestDeleteMail(ServerSessionSocket& session, Packet& mess
 	int32_t mail_id = 0;
 	Inbox * inbox = session.getInbox();
 
+	printDebugLog("sessionRequestDeleteMail", session, DEBUGLEVEL::EVENTS);
+
 	if (false == message.readForwardDWord(mail_id))
 	{
 		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
@@ -300,8 +304,9 @@ void Server::sessionRequestCompose(ServerSessionSocket& session, Packet& message
 {
 	Packet response;
 	Inbox * inbox = session.getInbox();
-
 	MailObj mail;
+
+	printDebugLog("sessionRequestCompose", session, DEBUGLEVEL::EVENTS);
 
 	if (false == mail.setMailAsPacket(inbox->getUser().getUserName(), message))
 	{
@@ -356,7 +361,7 @@ void * Server::debugPrintUserList(std::list<User*>& list)
 	std::list<User*>::iterator it;
 	char buflog[1024];
 
-	sprintf(buflog, "%d Users loaded.", list.size());
+	sprintf(buflog, "%d Users loaded.", static_cast<int>(list.size()));
 	printDebugLog(buflog, DEBUGLEVEL::INFO);
 
 	it_begin = list.begin();
