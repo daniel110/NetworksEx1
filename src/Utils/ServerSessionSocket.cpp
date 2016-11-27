@@ -45,6 +45,14 @@ void ServerSessionSocket::setInbox(Inbox* inbox)
 	}
 }
 
+void ServerSessionSocket::sendGeneralRespond(GeneralRespondStatuses res)
+{
+	Packet response;
+	response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
+	response.writeForwardDWord(res);
+	sendMessage(response);
+}
+
 Inbox* ServerSessionSocket::getInbox()
 {
 	return m_inbox;

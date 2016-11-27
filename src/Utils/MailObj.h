@@ -19,5 +19,5 @@ public:
 
 
     bool getMailasPacket(Packet& pct) const;
-    bool setMailAsPacket(Packet& pct);
+    bool setMailAsPacket(const std::string& user, Packet& pct);
 };

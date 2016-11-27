@@ -71,13 +71,20 @@ class Server
         void clearInboxList();
         void clearSessionList();
 
-        Inbox * getInboxFromUserString(const std::string& user, const std::string& pass);
+        Inbox * getInboxFromUserString(const std::string& user);
 
 
         void processRequset(ServerSessionSocket& session);
         void sessionWelcome(ServerSessionSocket& session);
+        int32_t getMessageAndType(ServerSessionSocket& session, Packet& message_result);
         void sessionLogin(ServerSessionSocket& session);
+        void sessionCommandRequest(ServerSessionSocket& session);
 
+
+        void sessionRequestShowInbox(ServerSessionSocket& session, Packet& message);
+        void sessionRequestGetMail(ServerSessionSocket& session, Packet& message);
+        void sessionRequestDeleteMail(ServerSessionSocket& session, Packet& message);
+        void sessionRequestCompose(ServerSessionSocket& session, Packet& message);
 
         bool printSocketError(int result);
         bool printStringToUser(const char* output);

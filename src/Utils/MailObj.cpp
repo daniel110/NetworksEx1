@@ -41,12 +41,9 @@ bool MailObj::getMailasPacket(Packet& pckt) const
 }
 
 
-bool MailObj::setMailAsPacket(Packet& pct)
+bool MailObj::setMailAsPacket(const std::string& user, Packet& pct)
 {
-	if (pct.readForwardStringField(m_from) == false)
-	{
-		return false;
-	}
+	m_from = user;
 
 	if (pct.readForwardStringField(m_to) == false)
 	{

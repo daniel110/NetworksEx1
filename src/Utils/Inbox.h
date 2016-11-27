@@ -36,6 +36,9 @@ class Inbox
          */
         bool setShowInboxMails(Packet& showInboxPacket);
 
+        MailObj * getMailByID(int32_t mail_id);
+        bool fillPacketWithMail(Packet& Packet, MailObj * mail);
+
         /***
          * return the user that connected to the inbox
          */

@@ -120,41 +120,17 @@ void Server::sessionWelcome(ServerSessionSocket& session)
 void Server::sessionLogin(ServerSessionSocket& session)
 {
 	Packet message;
-	Packet response;
-	int32_t type;
 	std::string user_field;
 	std::string pass_field;
 	Inbox * inbox = nullptr;
 	bool read_res = false;
 
-	/* Get a message from the client */
-	if (Socket::RES_SUCCESS != session.recvMessage(message))
-	{
-		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
-		response.writeForwardDWord(GENERAL_RESPOND_STATUS_SESSION_FAILURE);
-		session.sendMessage(response);
-		session.close();
-		return;
-	}
-
-	/* Read the type of the message */
-	read_res = message.readForwardDWord(type);
-	if (read_res != true)
-	{
-		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
-		response.writeForwardDWord(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
-		session.sendMessage(response);
-		return;
-	}
-
 	/* Check type of message to be login request.
 	 * All sessions that are not logged in must send login message first.
 	 */
-	if (type != COMMANDTYPE_LOGIN_REQ)
+	if (COMMANDTYPE_LOGIN_REQ != getMessageAndType(session, message))
 	{
-		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
-		response.writeForwardDWord(GENERAL_RESPOND_STATUS_NOT_LOGGED_IN);
-		session.sendMessage(response);
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_NOT_LOGGED_IN);
 		return;
 	}
 
@@ -162,9 +138,7 @@ void Server::sessionLogin(ServerSessionSocket& session)
 	read_res = message.readForwardStringField(user_field);
 	if (read_res != true)
 	{
-		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
-		response.writeForwardDWord(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
-		session.sendMessage(response);
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
 		return;
 	}
 
@@ -172,28 +146,29 @@ void Server::sessionLogin(ServerSessionSocket& session)
 	read_res = message.readForwardStringField(pass_field);
 	if (read_res != true)
 	{
-		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
-		response.writeForwardDWord(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
-		session.sendMessage(response);
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
 		return;
 	}
 
 	/* Try to find the inbox with this user name and password */
-	inbox = getInboxFromUserString(user_field, pass_field);
+	inbox = getInboxFromUserString(user_field);
 	if (inbox == nullptr)
 	{
-		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
-		response.writeForwardDWord(GENERAL_RESPOND_STATUS_UNKNOWN_USER);
-		session.sendMessage(response);
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNKNOWN_USER);
+		return;
+	}
+
+	/* Check the password of the user */
+	if (inbox->getUser().isPassCorrect(pass_field) == false)
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNKNOWN_USER);
 		return;
 	}
 
 	/* Check if the user already checked in */
 	if (inbox->isLogged() == true)
 	{
-		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
-		response.writeForwardDWord(GENERAL_RESPOND_STATUS_USER_ALREADY_LOGGEDON);
-		session.sendMessage(response);
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_USER_ALREADY_LOGGEDON);
 		return;
 	}
 
@@ -204,9 +179,7 @@ void Server::sessionLogin(ServerSessionSocket& session)
 	printDebugLog("User logged in.", session, DEBUGLEVEL::INFO);
 
 	/* Send success response */
-	response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
-	response.writeForwardDWord(GENERAL_RESPOND_STATUS_SUCCESS);
-	session.sendMessage(response);
+	session.sendGeneralRespond(GENERAL_RESPOND_STATUS_SUCCESS);
 }
 
 void Server::processRequset(ServerSessionSocket& session)
@@ -219,26 +192,162 @@ void Server::processRequset(ServerSessionSocket& session)
 		sessionLogin(session);
 		break;
 	case StateMachineStep::STATE_LOGEDON:
-
-		break;
-	case StateMachineStep::STATE_SHOWINBOX:
-
-		break;
-	case StateMachineStep::STATE_COMPOSE:
-
-		break;
-	case StateMachineStep::STATE_DELETEMAIL:
-
-		break;
-	case StateMachineStep::STATE_GETMAIL:
-
-		break;
-	case StateMachineStep::STATE_QUIT:
-
+		sessionCommandRequest(session);
 		break;
 	}
 }
 
+void Server::sessionCommandRequest(ServerSessionSocket& session)
+{
+	Packet message;
+	int32_t type;
+
+	type = getMessageAndType(session, message);
+
+	switch(type)
+	{
+	case COMMANDTYPE_SHOW_INBOX_REQ:
+		sessionRequestShowInbox(session, message);
+		break;
+	case COMMANDTYPE_GET_MAIL_REQ:
+		sessionRequestGetMail(session, message);
+		break;
+	case COMMANDTYPE_DELETE_MAIL_REQ:
+		sessionRequestDeleteMail(session, message);
+		break;
+	case COMMANDTYPE_COMPOSE_REQ:
+		sessionRequestCompose(session, message);
+		break;
+	default:
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		break;
+	}
+}
+
+void Server::sessionRequestShowInbox(ServerSessionSocket& session, Packet& message)
+{
+	Packet response;
+	Inbox * inbox = session.getInbox();
+
+	if (false == response.writeForwardDWord(COMMANDTYPE_SHOW_INBOX_RES))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+		return;
+	}
+
+	if (false == inbox->setShowInboxMails(response))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+		return;
+	}
+
+	session.sendMessage(response);
+}
+
+void Server::sessionRequestGetMail(ServerSessionSocket& session, Packet& message)
+{
+	Packet response;
+	int32_t mail_id = 0;
+	Inbox * inbox = session.getInbox();
+	MailObj * mail = nullptr;
+
+	if (false == message.readForwardDWord(mail_id))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		return;
+	}
+
+	mail = inbox->getMailByID(mail_id);
+	if (mail == nullptr)
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNKNOWN_MAIL_ID);
+		return;
+	}
+
+	if (false == inbox->fillPacketWithMail(response, mail))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+		return;
+	}
+
+	session.sendMessage(response);
+}
+
+void Server::sessionRequestDeleteMail(ServerSessionSocket& session, Packet& message)
+{
+	Packet response;
+	int32_t mail_id = 0;
+	Inbox * inbox = session.getInbox();
+
+	if (false == message.readForwardDWord(mail_id))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		return;
+	}
+
+	if (false == inbox->removeMail(mail_id))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNKNOWN_MAIL_ID);
+	}
+	else
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_SUCCESS);
+	}
+
+}
+
+void Server::sessionRequestCompose(ServerSessionSocket& session, Packet& message)
+{
+	Packet response;
+	Inbox * inbox = session.getInbox();
+
+	MailObj mail;
+
+	if (false == mail.setMailAsPacket(inbox->getUser().getUserName(), message))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		return;
+	}
+
+	std::istringstream stream(mail.m_to);
+	std::string to_user;
+
+	while (std::getline(stream, to_user, ','))
+	{
+
+		inbox = getInboxFromUserString(to_user);
+		if (inbox != nullptr)
+		{
+			MailObj * new_mail = new MailObj(mail);
+			inbox->addMail(new_mail);
+		}
+
+	}
+
+	session.sendGeneralRespond(GENERAL_RESPOND_STATUS_SUCCESS);
+}
+
+int32_t Server::getMessageAndType(ServerSessionSocket& session, Packet& message_result)
+{
+	int32_t type;
+
+	/* Get a message from the client */
+	if (Socket::RES_SUCCESS != session.recvMessage(message_result))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_SESSION_FAILURE);
+		session.close();
+		return COMMANDTYPE_UNVALID_REQ;
+	}
+
+	/* Read the type of the message */
+	if (message_result.readForwardDWord(type) != true)
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		return COMMANDTYPE_UNVALID_REQ;
+	}
+
+	return type;
+}
 
 void * Server::debugPrintUserList(std::list<User*>& list)
 {
@@ -269,7 +378,7 @@ void * Server::debugPrintUserList(std::list<User*>& list)
 }
 
 
-Inbox * Server::getInboxFromUserString(const std::string& user, const std::string& pass)
+Inbox * Server::getInboxFromUserString(const std::string& user)
 {
 	std::list<Inbox*>::iterator it_begin;
 	std::list<Inbox*>::iterator it_end;
@@ -286,15 +395,7 @@ Inbox * Server::getInboxFromUserString(const std::string& user, const std::strin
 
 		if (inbox->getUser().getUserName() == user)
 		{
-			if (inbox->getUser().isPassCorrect(pass))
-			{
-				return inbox;
-			}
-			else
-			{
-				return nullptr;
-			}
-
+			return inbox;
 		}
 
 	}

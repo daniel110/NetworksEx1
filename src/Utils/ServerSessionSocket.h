@@ -2,6 +2,7 @@
 
 #include "Socket.h"
 #include "Inbox.h"
+#include "Common.h"
 
 enum StateMachineStep
 {
@@ -50,6 +51,8 @@ class ServerSessionSocket : public Socket
          * Update state to *value* state.
          */
         void setState(StateMachineStep value);
+
+        void sendGeneralRespond(GeneralRespondStatuses res);
 
         /****
          * get session unique id

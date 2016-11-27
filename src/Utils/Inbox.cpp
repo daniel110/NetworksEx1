@@ -52,6 +52,7 @@ bool Inbox::removeMail(unsigned long id)
 
 	return isFound;
 }
+
 bool Inbox::setShowInboxMails(Packet& showInboxPacket)
 {
 	for (std::list<MailObj*>::iterator it = m_mails.begin();
@@ -63,6 +64,58 @@ bool Inbox::setShowInboxMails(Packet& showInboxPacket)
 		{
 			return false;
 		}
+	}
+
+	return true;
+}
+
+MailObj * Inbox::getMailByID(int32_t mail_id)
+{
+	for (std::list<MailObj*>::iterator it = m_mails.begin();
+			it != m_mails.end();
+			++it)
+	{
+		MailObj * mail = (*it);
+
+		if (mail == nullptr)
+		{
+			return nullptr;
+		}
+
+		if (mail->m_id == mail_id)
+		{
+			return mail;
+		}
+	}
+
+	return nullptr;
+}
+
+bool Inbox::fillPacketWithMail(Packet& Packet, MailObj * mail)
+{
+	if (mail == nullptr)
+	{
+		return false;
+	}
+
+	if (false == Packet.writeForwardStringField(mail->m_from))
+	{
+		return false;
+	}
+
+	if (false == Packet.writeForwardStringField(mail->m_to))
+	{
+		return false;
+	}
+
+	if (false == Packet.writeForwardStringField(mail->m_subject))
+	{
+		return false;
+	}
+
+	if (false == Packet.writeForwardStringField(mail->m_body))
+	{
+		return false;
 	}
 
 	return true;
