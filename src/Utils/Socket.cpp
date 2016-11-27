@@ -245,9 +245,10 @@ int Socket::sendMessage(const Packet& packet) const
 		return RES_PACKET_TOO_LONG;
 	}
 
-	if (Socket::RES_SUCCESS != sendAll((char*)&packetSize , sizeof(packetSize)))
+	int res = sendAll((char*)&packetSize , sizeof(packetSize));
+	if (Socket::RES_SUCCESS != res)
 	{
-		return RES_FAILED_SENDING_ALL_DATA;
+		return res;
 	}
 
 	return send(packet);
@@ -329,11 +330,6 @@ void Socket::fromSocketResultToErrorString(int result,
 		case RES_FAILED_RECEIVING_ALL_DATA:
 		{
 			error = "Failed to reading all data from socket";
-			break;
-		}
-		case RES_FAILED_SENDING_ALL_DATA:
-		{
-			error = "Failed to sending all data";
 			break;
 		}
 		case RES_ACCEPT_INVALID_SOCKET_ERROR:
