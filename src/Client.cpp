@@ -166,15 +166,15 @@ void Client::start()
 
 bool Client::initServerConnection(std::string& result)
 {
-	int res = 0;
-
+	/* create socket */
 	if (Socket::RES_INVALID_SOCKET_ERROR == m_sock.create())
 	{
 		result += "Failed to create socket";
 		return false;
 	}
 
-	res = m_sock.connect(m_hostname, m_port);
+	/* connect to server */
+	int res = m_sock.connect(m_hostname, m_port);
 	if (Socket::RES_SUCCESS != res)
 	{
 		std::string socketErr;
@@ -186,8 +186,10 @@ bool Client::initServerConnection(std::string& result)
 	}
 
 
+	/* receive welcome message from server - and print it to user */
 	if (false == recvWelcomeMessage(result))
 	{
+		result += "Failed receiving welcome message: " + result;
 		return false;
 	}
 
@@ -195,7 +197,7 @@ bool Client::initServerConnection(std::string& result)
 
 
 	result.clear();
-	/* First and must operation: login user to server*/
+	/*login user to server*/
 	if (false == commandLogin(result))
 	{
 		return false;
@@ -306,7 +308,7 @@ bool Client::commandLogin(std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type";
+		result += "Unable to read command type";
 		return false;
 	}
 
@@ -363,7 +365,7 @@ bool Client::commandShowInbox(std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type";
+		result += "Unable to read command type";
 		return false;
 	}
 
@@ -443,7 +445,7 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type";
+		result += "Unable to read command type";
 		return false;
 	}
 
@@ -546,7 +548,7 @@ bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 	 * BuildPacket *
 	 ***************/
 	Packet deleteMailPack;
-	deleteMailPack.writeForwardDWord(COMMANDTYPE_GET_MAIL_REQ);
+	deleteMailPack.writeForwardDWord(COMMANDTYPE_DELETE_MAIL_REQ);
 	deleteMailPack.writeForwardDWord(mailId);
 
 	/* send packet */
@@ -568,7 +570,7 @@ bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type";
+		result += "Unable to read command type";
 		return false;
 	}
 
@@ -602,6 +604,19 @@ bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 }
 bool Client::commandQuit(std::string& result)
 {
+	result = "Error on quit: ";
+	/***************
+	 * BuildPacket *
+	 ***************/
+	Packet quitPack;
+	quitPack.writeForwardDWord(COMMANDTYPE_QUIT_REQ);
+
+	/* send packet */
+	if (false == sendCommandAndLogSocketError(quitPack,result))
+	{
+		return false;
+	}
+
 	/* just break the loop - and exit - not message to show */
 	result.clear();
 	return false;
@@ -663,7 +678,7 @@ bool Client::commandCompose(std::string& result)
 	int32_t commandType;
 	if (false == resPacket.readForwardDWord(commandType))
 	{
-		result = "Unable to read command type";
+		result += "Unable to read command type";
 		return false;
 	}
 
@@ -825,13 +840,13 @@ bool Client::getStringFromInputWithPrefix(std::string& orgString,
 	inputStream >> prefix;
 	if (inputStream.fail())
 	{
-		data = "Bad info Format";
+		data += "Bad info Format";
 		return false;
 	}
 
 	if (0 != expectedPrefix.compare(prefix))
 	{
-		data = "Unmatched Prefix, Expected: " + expectedPrefix;
+		data += "Unmatched Prefix, Expected: " + expectedPrefix;
 		 	 	 " ,Got: " + prefix;
 
 		return false;
@@ -840,13 +855,13 @@ bool Client::getStringFromInputWithPrefix(std::string& orgString,
 	inputStream >> data;
 	if (inputStream.fail())
 	{
-		data = "Bad info format - failed to extract data";
+		data += "Bad info format - failed to extract data";
 		return false;
 	}
 
 	if (!inputStream.eof())
 	{
-		data = "Bad info format - got extra parameter";
+		data += "Bad info format - got extra parameter";
 		return false;
 	}
 
