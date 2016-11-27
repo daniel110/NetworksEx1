@@ -31,7 +31,7 @@ class Server
 
 		/*	From instructions */
 		static const long DEFAULT_PORT = 6423;
-		static const long MAX_CONNECTIONS = 1;
+		static const long MAX_CONNECTIONS = 2;
 
         Server(uint16_t port);
         virtual ~Server();

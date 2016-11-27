@@ -142,10 +142,11 @@ int Socket::sendAll(const char* buf, long size) const
 		readBytesCount = ::send(m_socketfd,
 						(void*) (buf+total),
 						(unsigned int) bytesLeft,
-						0);
+						MSG_NOSIGNAL);
 
 		if (0 >= readBytesCount)
 		{
+
 			return RES_SOCKET_GENERAL_FAILURE;
 		}
 

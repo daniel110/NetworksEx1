@@ -90,7 +90,7 @@ void Server::start()
 		it_end = m_sessions.end();
 		for (it = it_begin;
 				it != it_end;
-				++it)
+				)
 		{
 			ServerSessionSocket * session = *it;
 
@@ -100,9 +100,11 @@ void Server::start()
 				if (session->isValid() == false)
 				{
 					delete session;
-					m_sessions.erase(it);
+					it = m_sessions.erase(it);
+					continue;
 				}
 			}
+			++it;
 		} /* session iterator */
 
 	} /* while true */
@@ -229,6 +231,8 @@ void Server::sessionRequestShowInbox(ServerSessionSocket& session, Packet& messa
 	Packet response;
 	Inbox * inbox = session.getInbox();
 
+	printDebugLog("sessionRequestShowInbox", session, DEBUGLEVEL::EVENTS);
+
 	if (false == response.writeForwardDWord(COMMANDTYPE_SHOW_INBOX_RES))
 	{
 		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
@@ -263,6 +267,12 @@ void Server::sessionRequestGetMail(ServerSessionSocket& session, Packet& message
 	if (mail == nullptr)
 	{
 		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNKNOWN_MAIL_ID);
+		return;
+	}
+
+	if (false == response.writeForwardDWord(COMMANDTYPE_GET_MAIL_RES))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
 		return;
 	}
 
