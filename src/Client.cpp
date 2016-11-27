@@ -5,6 +5,8 @@
 #include "Utils/Packet.h"
 
 
+const std::string Client::DEFAULT_HOST = "localhost";
+
 const std::string Client::COMMAND_SHOW_INBOX = "SHOW_INBOX";
 const std::string Client::COMMAND_GET_MAIL = "GET_MAIL";
 const std::string Client::COMMAND_DELETE_MAIL = "DELETE_MAIL" ;

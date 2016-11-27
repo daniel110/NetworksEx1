@@ -42,7 +42,7 @@ bool Inbox::removeMail(unsigned long id)
 	{
 		if (id == (*it)->m_id)
 		{
-			delete(*it); /* delete mail */
+			delete (*it); /* delete mail */
 
 			m_mails.erase(it);
 			isFound = true;
@@ -58,7 +58,12 @@ bool Inbox::setShowInboxMails(Packet& showInboxPacket)
 			it != m_mails.end();
 			++it)
 	{
-		std::string mailRaw(fromMailToShowInboxRaw(*it));
+		std::string mailRaw;
+		if (false == fromMailToShowInboxRaw(*it , mailRaw))
+		{
+			return false;
+		}
+
 		if (false == showInboxPacket.writeForwardStringField(mailRaw))
 		{
 			return false;
@@ -74,11 +79,14 @@ const User& Inbox::getUser()
 }
 
 
-std::string Inbox::fromMailToShowInboxRaw(const MailObj* mail)
+bool Inbox::fromMailToShowInboxRaw(const MailObj* mail,
+									std::string& showInboxRaw)
 {
-	std::string showInboxRaw;
 	char idAsString[11] = {0}; /* max int has 10 digits */
-	sprintf(idAsString, "%d", mail->m_id);
+	if ( 0 > sprintf(idAsString, "%d", mail->m_id))
+	{
+		return false;
+	}
 
 	showInboxRaw = idAsString;
 	showInboxRaw += SHOW_INBOX_MAIL_INFO_DELIMITER +
@@ -90,7 +98,7 @@ std::string Inbox::fromMailToShowInboxRaw(const MailObj* mail)
 					SHOW_INBOX_MAIL_SUBJECT_WRAPPER;
 
 
-	return showInboxRaw;
+	return true;
 }
 
 

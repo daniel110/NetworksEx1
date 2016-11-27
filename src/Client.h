@@ -13,7 +13,8 @@ class Client
 {
 	public:
 
-		static const long DEFAULT_PORT = 6423;
+		static const u_int16_t DEFAULT_PORT = 6423;
+		static const std::string DEFAULT_HOST;
 
 		/***
 		 * Ctor - get hostname and port of the server
