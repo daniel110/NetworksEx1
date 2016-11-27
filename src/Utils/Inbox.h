@@ -41,6 +41,9 @@ class Inbox
          */
         const User& getUser();
 
+        /***
+		 * return true if the user is currently logged, else false
+		 */
         bool isLogged();
 
     private:
