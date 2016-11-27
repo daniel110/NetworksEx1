@@ -90,7 +90,7 @@ void Client::start()
 		{
 			/* before calling each command - we check that no extra argument
 			 * was passed by the user */
-			if (!inputStream.eof())
+			if (inputStream.eof())
 			{
 				keepGoing = commandShowInbox(resultStr);
 			}
