@@ -24,7 +24,7 @@ class ServerSessionSocket : public Socket
 		ServerSessionSocket(Socket& socket);
 		ServerSessionSocket();
 
-		~ServerSessionSocket();
+		virtual ~ServerSessionSocket();
 
         StateMachineStep getState();
         void setState(StateMachineStep value);

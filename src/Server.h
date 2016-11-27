@@ -34,6 +34,7 @@ class Server
 		static const long MAX_CONNECTIONS = 1;
 
         Server(uint16_t port);
+        virtual ~Server();
         bool loadUsersFromFile(char * filePath);
         void start();
 
