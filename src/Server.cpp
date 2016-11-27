@@ -189,7 +189,7 @@ void Server::sessionLogin(ServerSessionSocket& session)
 	}
 
 	/* Check if the user already checked in */
-	if (inbox->loged_in == true)
+	if (inbox->isLogged() == true)
 	{
 		response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
 		response.writeForwardDWord(GENERAL_RESPOND_STATUS_USER_ALREADY_LOGGEDON);
@@ -475,4 +475,10 @@ void Server::createInboxList(std::list<User*>& users)
 	}
 
 
+}
+
+
+Server::~Server()
+{
+	/*TODO: add imp */
 }

@@ -1,11 +1,12 @@
 #include "Inbox.h"
 
 
-#define SHOW_INBOX_MAIL_INFO_DELIMITER (" ")
-#define SHOW_INBOX_MAIL_SUBJECT_WRAPPER ("\"")
-#define SHOW_INBOX_MAIL_SUBJECT_NEWLINE ("\n")
+const std::string Inbox::SHOW_INBOX_MAIL_INFO_DELIMITER = " ";
+const std::string Inbox::SHOW_INBOX_MAIL_SUBJECT_WRAPPER = "\"";
 
-Inbox::Inbox(User& usr) : m_user(usr), m_idOfLastMail(0)
+Inbox::Inbox(User& usr) : m_user(usr),
+							m_idOfLastMail(0) ,
+							m_loggedIn(false)
 {
 
 }
@@ -38,18 +39,20 @@ bool Inbox::removeMail(unsigned long id)
 
 	return isFound;
 }
-int Inbox::setShowInboxMails(Packet& showInboxPacket)
+bool Inbox::setShowInboxMails(Packet& showInboxPacket)
 {
-	int result = 0;
 	for (std::list<MailObj*>::iterator it = m_mails.begin();
 			it != m_mails.end();
 			++it)
 	{
 		std::string mailRaw(fromMailToShowInboxRaw(*it));
-		showInboxPacket.writeForwardStringField(mailRaw);
+		if (false == showInboxPacket.writeForwardStringField(mailRaw))
+		{
+			return false;
+		}
 	}
 
-	return result;
+	return true;
 }
 
 const User& Inbox::getUser()
@@ -61,18 +64,17 @@ const User& Inbox::getUser()
 std::string Inbox::fromMailToShowInboxRaw(const MailObj* mail)
 {
 	std::string showInboxRaw;
-	char idAsString[6] = {0};
+	char idAsString[11] = {0}; /* max int has 10 digits */
 	sprintf(idAsString, "%d", mail->m_id);
 
-	showInboxRaw += idAsString;
+	showInboxRaw = idAsString;
 	showInboxRaw += SHOW_INBOX_MAIL_INFO_DELIMITER +
 					mail->m_from +
 					SHOW_INBOX_MAIL_INFO_DELIMITER +
 
 					SHOW_INBOX_MAIL_SUBJECT_WRAPPER +
 					mail->m_subject +
-					SHOW_INBOX_MAIL_SUBJECT_WRAPPER +
-					SHOW_INBOX_MAIL_SUBJECT_NEWLINE;
+					SHOW_INBOX_MAIL_SUBJECT_WRAPPER;
 
 
 	return showInboxRaw;
@@ -90,4 +92,10 @@ Inbox::~Inbox()
 
 		m_mails.pop_back();
 	}
+}
+
+
+bool Inbox::isLogged()
+{
+	return m_loggedIn;
 }

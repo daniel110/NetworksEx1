@@ -41,7 +41,7 @@ void ServerSessionSocket::setInbox(Inbox* inbox)
 	m_inbox = inbox;
 	if (inbox != nullptr)
 	{
-		inbox->loged_in = true;
+		inbox->m_loggedIn = true;
 	}
 }
 
@@ -54,7 +54,7 @@ void ServerSessionSocket::close()
 {
 	if (m_inbox != nullptr)
 	{
-		m_inbox->loged_in = false;
+		m_inbox->m_loggedIn = false;
 		m_inbox = nullptr;
 	}
 	Socket::close();
@@ -64,7 +64,7 @@ ServerSessionSocket::~ServerSessionSocket()
 {
 	if (m_inbox != nullptr)
 	{
-		m_inbox->loged_in = false;
+		m_inbox->m_loggedIn = false;
 	}
 	/* TODO: call Socket destructor?? - DF: It is called automatically at destruction */
 }
