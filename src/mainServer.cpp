@@ -26,7 +26,7 @@ int main (int argc, char ** argv)
 	/* do not care if we got extra parameters */
 
 	/* create and run client  */
-	Server server = Server(localPort);
+	Server server(localPort);
 	if (server.getState() != Server::SERVER_INITIATED)
 	{
 		return EXIT_FAILURE;
