@@ -37,5 +37,9 @@
 *.cproject
 Debug/
 
+#exec
+mail_server
+mail_client
+
 .settings/
 .idea/
