@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sys/select.h>
+#include <errno.h>
 #include "Socket.h"
 
 class FDSet
