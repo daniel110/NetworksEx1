@@ -863,10 +863,13 @@ bool Client::getStringFromInputWithPrefix(std::string& orgString,
 		return false;
 	}
 
+	/* allow data with spaces */
 	if (!inputStream.eof())
 	{
-		data += "Bad info format - got extra parameter";
-		return false;
+		std::string restOfLine;
+		std::getline(inputStream, restOfLine);
+
+		data += restOfLine;
 	}
 
 	return true;
