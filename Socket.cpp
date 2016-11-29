@@ -12,6 +12,11 @@
 #include "Socket.h"
 #include "Packet.h"
 
+#ifndef MSG_NOSIGNAL
+# define MSG_NOSIGNAL 0
+#endif
+
+
 const std::string Socket::ANY_IP = "0.0.0.0";
 
 Socket::Socket(socket_handle socketfd) : m_socketfd(socketfd)

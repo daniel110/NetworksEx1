@@ -41,10 +41,10 @@ int maine()
 	obj3.m_subject = "Check4";
 	obj3.m_body = "Bla Bla";
 
-	in.addMail(&obj); /* id = 1 */
-	in.addMail(&obj1); /* id = 2 */
-	in.addMail(&obj2); /* id = 3 */
-	in.addMail(&obj3); /* id = 4 */
+	in.addMail(obj); /* id = 1 */
+	in.addMail(obj1); /* id = 2 */
+	in.addMail(obj2); /* id = 3 */
+	in.addMail(obj3); /* id = 4 */
 
 
 	in.removeMail(2);
@@ -55,7 +55,7 @@ int maine()
 	obj4.m_subject = "Check5";
 	obj4.m_body = "Bla Bla";
 
-	in.addMail(&obj4); /* id = 5 */
+	in.addMail(obj4); /* id = 5 */
 
 
 	Packet pac;
