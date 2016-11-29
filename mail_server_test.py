@@ -29,7 +29,6 @@ RECV_MAIL_FORMAT = "From: %s\nTo: %s\nSubject: %s\nText: %s\n"
 def enqueue_output(out, queue):
     while True:
         for line in iter(out.readline, b''):
-            print(line)
             queue.put(line)
 
 
@@ -109,16 +108,13 @@ class TestMailServer(unittest.TestCase):
         with open(USERS_FILE, 'r') as fd:
             for l in fd:
                 line = l.replace('\n', '').split('\t')
-                print(line)
                 cls.users.append((line[0], line[1]))
 
-        print(cls.users)
 
         cls.mail_server = Server()
         cls.mail_server.start()
 
         cls.client = Client()
-        print(cls.client)
 
     @classmethod
     def tearDownClass(cls):
@@ -132,7 +128,6 @@ class TestMailServer(unittest.TestCase):
             self.client = Client()
 
     def tearDown(self):
-        print("disconnect")
         self.client.stop()
 
     def _get_user(self, index=0, name=None):
