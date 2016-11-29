@@ -5,12 +5,12 @@
 
 #include <string.h>
 
-#include "Utils/User.h"
-#include "Utils/Inbox.h"
-#include "Utils/MailObj.h"
-#include "Utils/ServerSessionSocket.h"
-#include "Utils/Common.h"
-#include "Utils/FDSet.h"
+#include "User.h"
+#include "Inbox.h"
+#include "MailObj.h"
+#include "ServerSessionSocket.h"
+#include "Common.h"
+#include "FDSet.h"
 
 class Server
 {

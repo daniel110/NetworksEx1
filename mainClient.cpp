@@ -3,12 +3,9 @@
 #include "Client.h"
 
 
-#define DEFAULT_HOST ("localhost")
-
-
-int maina (int argc, char ** argv)
+int main (int argc, char ** argv)
 {
-	std::string remoteHost(DEFAULT_HOST);
+	std::string remoteHost(Client::DEFAULT_HOST);
 	u_int16_t remotePort = Client::DEFAULT_PORT;
 
 

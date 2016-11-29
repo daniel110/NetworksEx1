@@ -1,9 +1,6 @@
 /* client implementation */
 
 #include "Client.h"
-#include "Utils/Common.h"
-#include "Utils/Packet.h"
-
 
 const std::string Client::DEFAULT_HOST = "localhost";
 

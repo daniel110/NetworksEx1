@@ -35,6 +35,7 @@
 # eclipse _windows_ files/dirs
 *.project
 *.cproject
+Debug/
 
 .settings/
 .idea/

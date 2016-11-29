@@ -4,9 +4,9 @@
 #include <sstream>
 #include <string>
 
-#include "Utils/Socket.h"
-#include "Utils/Packet.h"
-#include "Utils/Common.h"
+#include "Socket.h"
+#include "Packet.h"
+#include "Common.h"
 
 
 class Client

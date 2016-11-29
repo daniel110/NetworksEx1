@@ -6,7 +6,7 @@
  */
 
 #include <iostream>
-#include "../../src/Utils/Inbox.h"
+#include "../../Inbox.h"
 
 
 int maine()
@@ -76,6 +76,7 @@ int maine()
 	pac.readForwardStringField(field);
 	std::cout << field << std::endl;
 
+	return 0;
 }
 
 

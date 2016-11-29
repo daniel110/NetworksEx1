@@ -87,7 +87,7 @@ MailObj * Inbox::getMailByID(int32_t mail_id)
 			return nullptr;
 		}
 
-		if (mail->m_id == mail_id)
+		if (mail->m_id == (unsigned long) mail_id)
 		{
 			return mail;
 		}
