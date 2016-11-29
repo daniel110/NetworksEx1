@@ -6,26 +6,31 @@ import unittest
 
 
 MAIL_SERVER_EXE = "./mail_server"
-MAIL_CLIENT_EXE = "./mail_client"
 USERS_FILE = "test_users_file"
 SERVER_PORT = 5650 + random.randint(1, 19)
+
+MAIL_CLIENT_EXE = "./mail_client"
 DEFAULT_HOST = "localhost"
+
 WELCOME_MSG = b"Welcome! I am simple-mail-server.\n"
 CONNECTION_SUCCESSFUL_STR = b"Connected to server\n"
+
 SHOW_INBOX_CMD = "SHOW_INBOX\n"
 GET_MAIL_CMD = "GET_MAIL %d\n"
 DELETE_MAIL_CMD = "DELETE_MAIL %d\n"
 QUIT_CMD = "QUIT\n"
+
 COMPOSE_CMD = "COMPOSE\n"
 COMPOSE_REPONSE = b"Mail sent\n"
+
 RECV_MAIL_FORMAT = "From: %s\nTo: %s\nSubject: %s\nText: %s\n"
+
 
 def enqueue_output(out, queue):
     while True:
         for line in iter(out.readline, b''):
             print(line)
             queue.put(line)
-    # out.close()
 
 
 class Server(object):
@@ -69,9 +74,6 @@ class Client(object):
         self.t.daemon = True  # thread dies with the program
         self.t.start()
 
-        # res = self.mail_client.stdout.read()
-        # print(res)
-        # return res
         self.running = True
 
     def stop(self):
@@ -96,7 +98,6 @@ class Client(object):
         return result
 
     def recv(self):
-        # return self.mail_client.stdout.read()
         return self.q.get(timeout=2)
 
 
@@ -112,13 +113,6 @@ class TestMailServer(unittest.TestCase):
                 cls.users.append((line[0], line[1]))
 
         print(cls.users)
-
-        # cls.mail_server = subprocess.Popen([MAIL_SERVER_EXE, USERS_FILE, str(SERVER_PORT)],
-        #                                     stdin=subprocess.PIPE,
-        #                                     stdout=subprocess.PIPE,
-        #                                     stderr=subprocess.PIPE)
-
-        # cls.client = None
 
         cls.mail_server = Server()
         cls.mail_server.start()
