@@ -225,6 +225,9 @@ void Server::sessionCommandRequest(ServerSessionSocket& session)
 	case COMMANDTYPE_COMPOSE_REQ:
 		sessionRequestCompose(session, message);
 		break;
+	case COMMANDTYPE_QUIT_REQ:
+		session.close();
+		break;
 	default:
 		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
 		break;
