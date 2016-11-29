@@ -18,9 +18,9 @@ class Inbox
         virtual ~Inbox();
 
         /****
-         * Add *mail* to the inbox
+         * Create a copy of *mail*, and add it the inbox
          */
-        void addMail(MailObj* mail);
+        void addMail(MailObj& mail);
 
         /****
          * Remove mail from inbox by *id*
@@ -50,7 +50,7 @@ class Inbox
         bool isLogged();
 
     private:
-        User& m_user;
+        User m_user;
         std::list<MailObj*> m_mails;
         unsigned long m_idOfLastMail;
 

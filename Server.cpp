@@ -27,6 +27,12 @@ Server::Server(uint16_t port)
 	m_state = SERVER_LISTEN_SOCKET_ERROR;
 }
 
+Server::~Server()
+{
+	clearSessionList();
+	clearInboxList();
+}
+
 void Server::start()
 {
 
@@ -106,7 +112,6 @@ void Server::start()
 			}
 			++it;
 		} /* session iterator */
-
 	} /* while true */
 }
 
@@ -333,8 +338,7 @@ void Server::sessionRequestCompose(ServerSessionSocket& session, Packet& message
 		inbox = getInboxFromUserString(to_user);
 		if (inbox != nullptr)
 		{
-			MailObj * new_mail = new MailObj(mail);
-			inbox->addMail(new_mail);
+			inbox->addMail(mail);
 		}
 
 	}
@@ -534,6 +538,7 @@ std::list<User*> * Server::getUsersFromFile(char * filePatch)
 
     	user_list->push_back(nuser);
 
+
     	read_count = getline(&buf, &buf_len, hdl_input);
     }
 
@@ -566,8 +571,6 @@ void Server::clearSessionList()
 	{
 		cur_session = m_sessions.back();
 
-		cur_session->close();
-
 		delete cur_session;
 
 		m_sessions.pop_back();
@@ -587,14 +590,11 @@ void Server::createInboxList(std::list<User*>& users)
 		nInbox = new Inbox(*cur_user);
 		m_all_inbox.push_back(nInbox);
 
+		/* delete user and pop out of the list */
+		delete cur_user;
 		users.pop_back();
 	}
 
 
 }
 
-
-Server::~Server()
-{
-	/*TODO: add imp */
-}

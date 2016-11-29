@@ -50,6 +50,8 @@ void ServerSessionSocket::sendGeneralRespond(GeneralRespondStatuses res)
 	Packet response;
 	response.writeForwardDWord(COMMANDTYPE_GENERAL_MESSAGE);
 	response.writeForwardDWord(res);
+
+	/* TODO: check response val */
 	sendMessage(response);
 }
 

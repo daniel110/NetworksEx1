@@ -24,9 +24,9 @@ Inbox::~Inbox()
 		m_mails.pop_back();
 	}
 }
-void Inbox::addMail(MailObj* mail)
+void Inbox::addMail(MailObj& mail)
 {
-	MailObj* copyMail = new MailObj(*mail);
+	MailObj* copyMail = new MailObj(mail);
 	copyMail->m_id = ++m_idOfLastMail;
 
 	m_mails.push_back(copyMail);

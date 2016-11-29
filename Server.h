@@ -59,10 +59,6 @@ class Server
         std::list<Inbox*> m_all_inbox;
 		std::list<ServerSessionSocket*> m_sessions;
 
-		//std::list<MailObj*>& getMailsBySender(std::string& userName);
-        //std::list<MailObj*>& getMailsByReceiver(std::string& userName);
-
-
 
 		User * getUserFromLine(char * buf, int size);
 		std::list<User*> * getUsersFromFile(char * filePatch);
