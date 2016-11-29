@@ -7,7 +7,7 @@ OBJS_Client = mainClient.o Client.o Common.o Packet.o Socket.o
 EXEC_Server = mail_server
 EXEC_Client = mail_client
 
-CPP_COMP_FLAG = -Wall -g
+CPP_COMP_FLAG = -std=c++11 -Wall -g 
 
 
 all: $(EXEC_Server) $(EXEC_Client)
