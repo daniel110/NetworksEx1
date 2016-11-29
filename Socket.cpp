@@ -13,7 +13,7 @@
 #include "Packet.h"
 
 #ifndef MSG_NOSIGNAL
-# define MSG_NOSIGNAL 0
+# define MSG_NOSIGNAL SO_NOSIGPIPE
 #endif
 
 
