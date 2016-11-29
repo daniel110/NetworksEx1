@@ -51,7 +51,7 @@ class Server
 			INFO_MORE,
 		};
 
-        DEBUGLEVEL debug_log = INFO_MORE;
+        DEBUGLEVEL debug_log = NO_LOG;
 
     private:
         SERVER_STATE m_state;
