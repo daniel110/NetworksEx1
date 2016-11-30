@@ -143,8 +143,6 @@ class TestMailServer(unittest.TestCase):
     def test_a_connect(self):
         user = self._get_user(0)
 
-        # self._connect(user)
-
         if not self.client.is_running():
             self.client.start()
             self._recv()
@@ -223,6 +221,18 @@ class TestMailServer(unittest.TestCase):
 
         self.assertEqual(res, (RECV_MAIL_FORMAT % (frm, to, subject, text)).encode('utf-8'))
 
+        self._send("GET_MAIL                2\n")  # Server should still be able to parse this
+
+        res = b""
+
+        while True:
+            try:
+                res += self._recv()
+            except Empty:
+                break
+
+        self.assertEqual(res, (RECV_MAIL_FORMAT % (frm, to, subject, text)).encode('utf-8'))
+
     def test_e_delete_mail(self):
         expected_mail2 = '2 %s "Avengers Internship"\n' % self._get_user(0)[0]
 
@@ -237,6 +247,91 @@ class TestMailServer(unittest.TestCase):
     def test_f_quit(self):
         # TODO: How to test quit?
         pass
+
+    # --- TEST BAD STUFF --- #
+
+    def test_g_bad_login_user_prefix(self):
+        user = self._get_user(0)
+
+        if not self.client.is_running():
+            self.client.start()
+            self._recv()
+
+        self._send("NotUser: %s\n" % user[0])
+        # self._send("Password: %s\n" % user[1])
+
+        self.assertEqual(self._recv(), b"Failed on Login: Unmatched Prefix, Expected: User:\n")
+
+    def test_h_bad_login_password_prefix(self):
+        user = self._get_user(0)
+
+        if not self.client.is_running():
+            self.client.start()
+            self._recv()
+
+        self._send("User: %s\n" % user[0])
+        self._send("!Password: %s\n" % user[1])
+
+        self.assertEqual(self._recv(), b"Failed on Login: Unmatched Prefix, Expected: Password:\n")
+
+    def test_i_bad_get_mail_id(self):
+        user1 = self._get_user(1)
+
+        self._connect(user1)
+
+        self._send(GET_MAIL_CMD % 100)  # Not suppose to have mail with id 100
+        self.assertEqual(self._recv(), b"Failed on Get Mail: Unknown mail id.\n")
+
+        self._send("GET_MAIL not_a_number\n")
+        self.assertEqual(self._recv(), b"Unable to extract mail id.\n")
+
+        self._send("GET_MAIL 2 2\n")
+        self.assertEqual(self._recv(), b"The second and last parameter of GET_MAIL should be int\n")
+
+        self._send("GET_MAIL 2.2\n")
+        self.assertEqual(self._recv(), b"The second and last parameter of GET_MAIL should be int\n")
+
+    def test_j_bad_delete_mail_id(self):
+        user1 = self._get_user(1)
+
+        self._connect(user1)
+
+        self._send(DELETE_MAIL_CMD % 100)  # Not suppose to have mail with id 100
+        self.assertEqual(self._recv(), b"Failed on delete mail: Unknown mail id.\n")
+
+        self._send("DELETE_MAIL not_a_number\n")
+        self.assertEqual(self._recv(), b"Unable to extract mail id.\n")
+
+        self._send("DELETE_MAIL 2 2\n")
+        self.assertEqual(self._recv(),
+                         b"The second and last parameter of DELETE_MAIL should be int\n")
+
+        self._send("DELETE_MAIL 2.2\n")
+        self.assertEqual(self._recv(),
+                         b"The second and last parameter of DELETE_MAIL should be int\n")
+
+    def test_k_extra_args(self):
+        self._connect(self._get_user(1))
+
+        self._send("SHOW_INBOX 1\n")
+        self.assertEqual(self._recv(), b"Got Extra arguments. Try command again.\n")
+
+    def test_l_bad_commands(self):
+        self._connect(self._get_user(1))
+
+        self._send("NOT_A_VALID_CMD\n")
+        self.assertEqual(self._recv(), b"Invalid command type name\n")
+
+        self._send("SHOW_INBOX1\n")
+        self.assertEqual(self._recv(), b"Invalid command type name\n")
+
+        self._send("SHOW INBOX\n")
+        self.assertEqual(self._recv(), b"Invalid command type name\n")
+
+        self._send("1 SHOW_INBOX\n")
+        self.assertEqual(self._recv(), b"Invalid command type name\n")
+
+    # --- PRIVATE --- #
 
     def _connect(self, user=None):
         if self.client.is_running():
