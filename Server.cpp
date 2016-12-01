@@ -36,6 +36,11 @@ Server::~Server()
 void Server::start()
 {
 
+	if (SERVER_READY_TO_LISTEN != getState())
+	{
+		return;
+	}
+
 	FDSet sockets;
 	Socket new_conection;
 	int socket_res = 0;
@@ -44,6 +49,7 @@ void Server::start()
 	std::list<ServerSessionSocket*>::iterator it_end;
 	std::list<ServerSessionSocket*>::iterator it;
 
+	/* Start ti listen */
 	socket_res = listener.listen(MAX_CONNECTIONS);
 	if (Socket::RES_SUCCESS != socket_res)
 	{
@@ -54,10 +60,14 @@ void Server::start()
 
 	printDebugLog("Server is listening...", DEBUGLEVEL::EVENTS);
 
+	/* Check for new connections and updated on the current connections */
 	while (true)
 	{
-		sockets.clear();
 
+		/* Fill the sockets class with the listener socket
+		 * and all current sessions sockets.
+		 */
+		sockets.clear();
 		sockets.add(listener);
 
 		it_begin = m_sessions.begin();
@@ -70,10 +80,16 @@ void Server::start()
 			sockets.add(*session);
 		}
 
+		/* Wait until new data or connection arrives.
+		 * This is a blocking method.
+		 */
 		sockets.waitOnSockets();
 
 		printDebugLog("Out of select.", DEBUGLEVEL::INFO);
 
+		/* Check if we got new connection. If so, accept it, create new session
+		 * and send a welcome message to the client.
+		 */
 		if (true == sockets.check(listener))
 		{
 			printDebugLog("Got new client.", DEBUGLEVEL::EVENTS);
@@ -92,6 +108,7 @@ void Server::start()
 			sessionWelcome(*new_session);
 		}
 
+		/* Check for every session in the list, if it got new data */
 		it_begin = m_sessions.begin();
 		it_end = m_sessions.end();
 		for (it = it_begin;
@@ -102,6 +119,9 @@ void Server::start()
 
 			if (true == sockets.check(*session))
 			{
+				/* We got new data, so process the session.
+				 * Check if the session is closed. if so, remove it from the list.
+				 */
 				processRequset(*session);
 				if (session->isValid() == false)
 				{
@@ -440,14 +460,13 @@ bool Server::printStringToUser(const char* output)
 	return Common::cmnPrintStringToUser(output);
 }
 
-bool Server::recvLineFromUser(std::string& input)
-{
-	return Common::cmnRecvLineFromUser(input);
-}
-
-
 bool Server::loadUsersFromFile(char * filePatch)
 {
+	if (m_state != SERVER_INITIATED)
+	{
+		return false;
+	}
+
 	std::list<User*> * user_list = getUsersFromFile(filePatch);
 	if (user_list == nullptr)
 	{
@@ -598,6 +617,35 @@ void Server::createInboxList(std::list<User*>& users)
 		users.pop_back();
 	}
 
+}
 
+
+void Server::printDebugLog(const char * buf, ServerSessionSocket& session, DEBUGLEVEL type)
+{
+	if (type <= debug_log)
+	{
+
+		char buflog[1024];
+
+		if (session.getInbox() == nullptr)
+		{
+			sprintf(buflog, "session %d: ", session.getID());
+		}
+		else
+		{
+			sprintf(buflog, "user %s: ", session.getInbox()->getUser().getUserName().c_str());
+		}
+
+		strcat(buflog, buf);
+		printStringToUser(buflog);
+
+	}
+}
+void Server::printDebugLog(const char * buf, DEBUGLEVEL type)
+{
+	if (type <= debug_log)
+	{
+		printStringToUser(buf);
+	}
 }
 

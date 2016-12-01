@@ -131,26 +131,6 @@ bool Packet::readForward(char * dst, unsigned long len)
 	}
 }
 
-unsigned long Packet::bytesLeftLine() const
-{
-	unsigned long cur = m_cur;
-	unsigned long old_cur = m_cur;
-	unsigned long left = bytesLeft();
-
-	while (left > 0)
-	{
-		char cur_char = *(m_buff + cur);
-		cur ++;
-		if (cur_char == '\n')
-		{
-			break;
-		}
-		left -= 1;
-	}
-
-	return (cur - old_cur);
-}
-
 bool Packet::readForwardString(std::string& out, unsigned long length)
 {
 	if (bytesLeft() < length)
@@ -164,27 +144,6 @@ bool Packet::readForwardString(std::string& out, unsigned long length)
 	m_cur += length;
 
 	return true;
-}
-
-unsigned long Packet::readLine(char * dst, unsigned long max)
-{
-	unsigned long old_cur = m_cur;
-	unsigned long left = bytesLeft();
-
-	while (left > 0)
-	{
-		char cur_char = *(m_buff + m_cur);
-		*dst = cur_char;
-		m_cur ++;
-		if (cur_char == '\n')
-		{
-			break;
-		}
-		left -= 1;
-		dst += 1;
-	}
-
-	return (m_cur - old_cur);
 }
 
 char* Packet::getData() const

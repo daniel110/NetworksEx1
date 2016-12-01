@@ -8,7 +8,8 @@
 typedef int socket_handle;
 
 /***
- * Socket class is a wrapper for socket linux api
+ * Socket class
+ * a Wrapper for socket linux api
  *
  *	Usage:
  *		1) server side init flow:
@@ -26,6 +27,7 @@ class Socket
 		friend class FDSet;
 		friend class ServerSessionSocket;
 
+		/* Possible return values for each public method. */
 		enum socketError
 		{
 			RES_BAD_MESSAGE_FORMAT = -700,
@@ -45,6 +47,7 @@ class Socket
 		typedef int32_t length_field_t;
 		static const length_field_t MAX_PACKET_LENGTH = 0xFFFF;
 
+		/* ANY_IP constant */
 		static const std::string ANY_IP;
 
 		/****
