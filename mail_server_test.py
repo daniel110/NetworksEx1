@@ -1,8 +1,11 @@
 import random
 import subprocess
+import socket
+import struct
 from threading  import Thread
 from queue import Queue, Empty
 import unittest
+import time
 
 
 MAIL_SERVER_EXE = "./mail_server"
@@ -330,6 +333,31 @@ class TestMailServer(unittest.TestCase):
 
         self._send("1 SHOW_INBOX\n")
         self.assertEqual(self._recv(), b"Invalid command type name\n")
+
+    def test_m_bad_packet(self):
+        self.client.stop()
+
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect(("localhost" ,SERVER_PORT))
+
+        time.sleep(1)
+
+        self.assertEqual(client_socket.recv(256), b'*\x00\x00\x00\t\x00\x00\x00"\x00\x00\x00Welcome! I am simple-mail-server.\x00')
+
+        packet = struct.pack("!I", 95959595)
+        client_socket.send(packet)
+        time.sleep(1)
+        result = client_socket.recv(256)
+
+        self.assertEqual(result, b'\x08\x00\x00\x00\x08\x00\x00\x00\r\x00\x00\x00')
+
+        packet = struct.pack("!I", 95959595)
+        client_socket.send(packet)
+
+        time.sleep(1)
+        result = client_socket.recv(256)
+
+        self.assertEqual(result, b'\x08\x00\x00\x00\x08\x00\x00\x00\r\x00\x00\x00')
 
     # --- PRIVATE --- #
 
