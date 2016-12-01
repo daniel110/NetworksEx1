@@ -8,11 +8,20 @@
 #include "Packet.h"
 #include "Common.h"
 
-
+/*	Client class
+ *
+ * 	Client side of the mail service.
+ * 	Instructions:
+ * 	- Construct the client with the hostname and port.
+ * 	  (Default port is DEFAULT_PORT)
+ *	- Call start()
+ *
+ */
 class Client
 {
 	public:
 
+		/*	default values */
 		static const u_int16_t DEFAULT_PORT = 6423;
 		static const std::string DEFAULT_HOST;
 

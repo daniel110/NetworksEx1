@@ -5,11 +5,19 @@
 #include "MailObj.h"
 #include "User.h"
 
+/* Inbox class
+ *
+ * Inbox represent a server user with his stored emails.
+ * For every user registered on the server, we will use an Inbox.
+ */
 class Inbox
 {
 	friend class ServerSessionSocket;
 
     public:
+		/* Create an Inbox for that user.
+		 * The inbox will have an internal copy of the User object.
+		 */
         Inbox(User& usr);
 
         /****
@@ -18,7 +26,7 @@ class Inbox
         virtual ~Inbox();
 
         /****
-         * Create a copy of *mail*, and add it the inbox
+         * Create a copy of *mail*, and add it the inbox.
          */
         void addMail(MailObj& mail);
 
@@ -30,17 +38,29 @@ class Inbox
         bool removeMail(unsigned long id);
 
         /****
-         * Set *showInboxPacket* with all the inbox's mails in correct format
+         * Write to the packet *showInboxPacket* the Show_Inbox response message.
+         * This packet is sent to the client and printed as strings to the client constole.
          *
          * @return	On success true, On Failure false
          */
         bool setShowInboxMails(Packet& showInboxPacket);
 
+        /****
+         * Get an email pointer (not a copy) by ID.
+         * @return	Pointer of the email. If not mail found return nullptr.
+         */
         MailObj * getMailByID(int32_t mail_id);
+
+        /****
+         * Write to the packet *Packet* the get_mail response message
+         * using the *mail* email object.
+         *
+         * @return	On success true, On Failure false
+         */
         bool fillPacketWithMail(Packet& Packet, MailObj * mail);
 
         /***
-         * return the user that connected to the inbox
+         * return a copy of the user object that connected to the inbox
          */
         const User& getUser();
 
@@ -58,7 +78,8 @@ class Inbox
 
         /***
          * Get *mail* object and set *showInboxRaw* with a string which represent
-         * the mail as SHOW_INBOX
+         * a mail line for the SHOW_INBOX console output.
+         * Used by setShowInboxMails()
          *
          * @return	On success true, On Failure false
          */

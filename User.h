@@ -2,6 +2,10 @@
 
 #include "Packet.h"
 
+/* User class
+ *
+ * Represent a user info.
+ */
 class User
 {
     private:
@@ -12,16 +16,18 @@ class User
         		  const std::string& pass);
 
     public:
+        /* This is just for Debug print user list */
         friend class Server;
 
-
+        /* Initiate a user object */
         User(std::string& userName, std::string& pass);
-        User(const User& user);
 
-        bool getUserAsPacket(Packet& pckt);
-        bool setUserFromPacket(Packet& pct);
-
+        /* Check if a password is the user password.
+         * @return True is the password is correct.
+         */
         bool isPassCorrect(const std::string& pass) const;
 
+        /* @return a Reference of the user name string.
+         */
         const std::string& getUserName() const;
 };

@@ -10,6 +10,18 @@ enum StateMachineStep
     STATE_LOGEDON,
 };
 
+
+/* ServerSessionSocket Class
+ *
+ * Session represents a connected socket with a client.
+ * The session has a state (StateMachineStep) that represent the state
+ * of the client with the server.
+ *
+ * If the client is logged in, The session also has a pointer to an Inbox
+ * that represent the logged in user Inbox. The Inbox is marked as logged
+ * in during this time.
+ *
+ */
 class ServerSessionSocket : public Socket
 {
     public:
@@ -44,20 +56,25 @@ class ServerSessionSocket : public Socket
          */
         void setState(StateMachineStep value);
 
+        /****
+         * Send a general response to the client.
+         */
         void sendGeneralRespond(GeneralRespondStatuses res);
 
         /****
-         * get session unique id
+         * get session unique id. This value should not have any meaning except
+         * the ID of the session.
          */
         int getID() const;
 
         /****
-         * Set inbox object and update that the inbox is now logged on
+         * Set inbox object and update that the inbox is now logged on.
+         * This only saves the pointer. Could be nullptr.
          */
         void setInbox(Inbox* inbox);
 
         /****
-         * return inbox object
+         * return inbox object.
          */
         Inbox* getInbox();
 
@@ -71,6 +88,9 @@ class ServerSessionSocket : public Socket
         StateMachineStep m_state;
         Inbox* m_inbox;
 
+        /***
+         * Initiate the internal state of the session.
+         */
         void initState();
 };
 

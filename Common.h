@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 
+/* Valid message types */
 enum CommandTypes
 {
 	COMMANDTYPE_UNVALID_REQ = 0,
@@ -20,6 +21,7 @@ enum CommandTypes
 
 };
 
+/* Valid response statuses from the server */
 enum GeneralRespondStatuses
 {
 	/* this message do not sent by the server - it for client only */
@@ -27,7 +29,11 @@ enum GeneralRespondStatuses
 
 	GENERAL_RESPOND_STATUS_SUCCESS = 0,
 	GENERAL_RESPOND_STATUS_UNKNOWN_USER = 1,
+
+	/* We do not allow the client to distinguish between user name not found
+	 * and password is incorrect for security reasons */
 	//GENERAL_RESPOND_STATUS_WRONG_PASS = 2,
+
 	GENERAL_RESPOND_STATUS_NOT_LOGGED_IN = 3,
 	GENERAL_RESPOND_STATUS_UNKNOWN_MAIL_ID = 4,
 	GENERAL_RESPOND_STATUS_USER_ALREADY_LOGGEDON = 5,
@@ -35,10 +41,9 @@ enum GeneralRespondStatuses
 	GENERAL_RESPOND_STATUS_FATAL_ERROR = 11,
 	GENERAL_RESPOND_STATUS_UNVALID_MESSAGE = 12,
 	GENERAL_RESPOND_STATUS_SESSION_FAILURE = 13,
-
-
 };
 
+/* General common methods and constatns used by the client and the server */
 class Common
 {
 
