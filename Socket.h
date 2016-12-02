@@ -161,8 +161,9 @@ class Socket
         int recv ( Packet& packet, unsigned short size) const;
 
         /****
-		 * receive packet data by reading the first bytes of the data
-		 * and check the packet size (then calls recv)
+		 * receive packet data by reading the size field,
+		 * check the packet size and then the data (calls recv).
+		 * The size field is a 4-byte little endian number.
 		 *
 		 * @return:
 		 *  on success: RES_SUCCESS
@@ -172,7 +173,8 @@ class Socket
 		 */
         int recvMessage(Packet& packet) const;
         /****
-		 * Send packet data, and before that the packet size.
+		 * Send packet data, and before that the packet size field.
+		 * The size field is a 4-byte little endian number.
 		 * (using Socket::sendAll and Socket::send)
 		 *
 		 * @return:
