@@ -769,7 +769,7 @@ bool Client::convertFromGeneralResMessageIdToString(GeneralRespondStatuses messa
 		case GENERAL_RESPOND_STATUS_FATAL_ERROR:
 		{
 			result += "Server had a fatal error and it had to go down - going down.";
-			break;
+			return false;
 		}
 		case GENERAL_RESPOND_STATUS_UNVALID_MESSAGE:
 		{
@@ -779,7 +779,7 @@ bool Client::convertFromGeneralResMessageIdToString(GeneralRespondStatuses messa
 		case GENERAL_RESPOND_STATUS_SESSION_FAILURE:
 		{
 			result += "Server connection error - going down.";
-			break;
+			return false;
 		}
 
 		default:
