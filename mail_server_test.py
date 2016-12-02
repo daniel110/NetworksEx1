@@ -6,7 +6,6 @@ from threading  import Thread
 from queue import Queue, Empty
 import unittest
 import time
-import os
 
 
 MAIL_SERVER_EXE = "./mail_server"
@@ -156,6 +155,30 @@ class TestMailServer(unittest.TestCase):
         self._send("Password: %s\n" % user[1])
 
         self.assertEqual(self._recv(), CONNECTION_SUCCESSFUL_STR)
+
+    def test_a_a_connect_bad_username(self):
+        user = self._get_user(0)
+
+        if not self.client.is_running():
+            self.client.start()
+            self._recv()
+
+        self._send("User: %sxx\n" % user[0])
+        self._send("Password: %s\n" % user[1])
+
+        self.assertEqual(self._recv(), b"Failed on Login: Unknown user name.\n")
+
+    def test_a_a_connect_bad_password(self):
+        user = self._get_user(0)
+
+        if not self.client.is_running():
+            self.client.start()
+            self._recv()
+
+        self._send("User: %s\n" % user[0])
+        self._send("Password: %sxx\n" % user[1])
+
+        self.assertEqual(self._recv(), b"Failed on Login: Unknown password.\n")
 
     def test_b_compose(self):
         self._connect(self._get_user(0))
@@ -374,7 +397,7 @@ class TestMailServer(unittest.TestCase):
 
         self.assertEqual(result, b'\x00\x00\x00\x08\x00\x00\x00\x08\x00\x00\x00\x03')
 
-        packet = struct.pack("!II", 4, 9999)
+        packet = struct.pack("!II", 4, 10989)
         client_socket.send(packet)
 
         time.sleep(1)

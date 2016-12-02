@@ -120,13 +120,20 @@ class TestMailServer(unittest.TestCase):
 
         self.assertGreater(res[0].decode().index(MAIL_SERVER_EXE), 0)
 
-        server.stop()
+        # Starting client, try to login
+        client = Client()
+        client.start()
+        client.recv()
 
-    def test_running_server_with_bad_port(self):
-        server = Server(port=99999999999)
-        server.start()
+        client.send("User: Clark\n")
+        client.send("Password: Kent\n")
 
-        pid = server.mail_server.pid
+        res = client.recv()
+
+        self.assertEqual(res, b"Failed on Login: Unknown user name.\n")
+
+
+        # Make sure the server still running
 
         p1 = subprocess.Popen(['ps', '-fade'], stdout=subprocess.PIPE)
         p2 = subprocess.Popen(['grep', str(pid)], stdin=p1.stdout, stdout=subprocess.PIPE)
@@ -134,6 +141,7 @@ class TestMailServer(unittest.TestCase):
 
         self.assertGreater(res[0].decode().index(MAIL_SERVER_EXE), 0)
 
+        client.stop()
         server.stop()
 
 
