@@ -6,6 +6,7 @@ from threading  import Thread
 from queue import Queue, Empty
 import unittest
 import time
+import os
 
 
 MAIL_SERVER_EXE = "./mail_server"
@@ -71,6 +72,7 @@ class Client(object):
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE)
+        self.pid = self.mail_client.pid
         self.q = Queue()
         self.t = Thread(target=enqueue_output, args=(self.mail_client.stdout, self.q))
         self.t.daemon = True  # thread dies with the program
@@ -249,7 +251,29 @@ class TestMailServer(unittest.TestCase):
 
     def test_f_quit(self):
         # TODO: How to test quit?
-        pass
+        self.client.start()
+
+        time.sleep(1)
+
+        pid = self.client.pid
+
+        p1 = subprocess.Popen(['ps', '-fade'], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(['grep', str(pid)], stdin=p1.stdout, stdout=subprocess.PIPE)
+        res = p2.communicate()[0].split(b'\n')
+
+        self.assertGreater(res[0].decode().index('./mail_client'), 0)
+
+
+        self.client.mail_client.stdin.write(QUIT_CMD.encode('utf-8'))
+        self.client.mail_client.stdin.flush()
+
+        time.sleep(2)
+
+        p1 = subprocess.Popen(['ps', '-fade'], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(['grep', str(pid)] , stdin=p1.stdout, stdout=subprocess.PIPE)
+        res = p2.communicate()[0].split(b'\n')
+
+        self.assertRaises(ValueError, res[0].decode().index, './mail_client')  # should not be found
 
     # --- TEST BAD STUFF --- #
 
@@ -261,7 +285,6 @@ class TestMailServer(unittest.TestCase):
             self._recv()
 
         self._send("NotUser: %s\n" % user[0])
-        # self._send("Password: %s\n" % user[1])
 
         self.assertEqual(self._recv(), b"Failed on Login: Unmatched Prefix, Expected: User:\n")
 
@@ -344,20 +367,20 @@ class TestMailServer(unittest.TestCase):
 
         self.assertEqual(client_socket.recv(256), b'*\x00\x00\x00\t\x00\x00\x00"\x00\x00\x00Welcome! I am simple-mail-server.\x00')
 
-        packet = struct.pack("!I", 95959595)
+        packet = struct.pack("<II", 4, 555)
         client_socket.send(packet)
         time.sleep(1)
         result = client_socket.recv(256)
 
-        self.assertEqual(result, b'\x08\x00\x00\x00\x08\x00\x00\x00\r\x00\x00\x00')
+        self.assertEqual(result, b'\x08\x00\x00\x00\x08\x00\x00\x00\x03\x00\x00\x00')
 
-        packet = struct.pack("!I", 95959595)
+        packet = struct.pack("<II", 4, 9999)
         client_socket.send(packet)
 
         time.sleep(1)
         result = client_socket.recv(256)
 
-        self.assertEqual(result, b'\x08\x00\x00\x00\x08\x00\x00\x00\r\x00\x00\x00')
+        self.assertEqual(result, b'\x08\x00\x00\x00\x08\x00\x00\x00\x03\x00\x00\x00')
 
     # --- PRIVATE --- #
 

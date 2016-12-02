@@ -498,7 +498,7 @@ User * Server::getUserFromLine(char * buf, int size)
 		return nullptr;
 	}
 
-	while ((*ptr_cur != '\r') && (*ptr_cur != '\n') && (*ptr_cur != '\t') && ((ptr_cur - ptr_start) < size))
+	while ((*ptr_cur != '\0') && (*ptr_cur != '\r') && (*ptr_cur != '\n') && (*ptr_cur != '\t') && ((ptr_cur - ptr_start) < size))
 	{
 		ptr_cur++;
 	}
@@ -515,7 +515,7 @@ User * Server::getUserFromLine(char * buf, int size)
 	size -= (ptr_cur - ptr_start);
 	ptr_start = ptr_cur;
 
-	while ((*ptr_cur != '\r') && (*ptr_cur != '\n') && ((ptr_cur - ptr_start) < size))
+	while ((*ptr_cur != '\0') && (*ptr_cur != '\r') && (*ptr_cur != '\n') && ((ptr_cur - ptr_start) < size))
 	{
 		ptr_cur++;
 	}
