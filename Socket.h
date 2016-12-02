@@ -114,6 +114,8 @@ class Socket
 
         /****
          * connect user to server by *host* and *port*
+         * 		if the host is not an ip address, try to convert it to host,
+         * 		(note: even if multiply ip address is available check only the first)
          *
          *
 		 * @return:
@@ -207,6 +209,9 @@ class Socket
     private:
         static const int SOCKET_INVALID_DEFAULT = -1;
 
+        /* return values of apis */
+        static const int GETADDRINFO_SUCCESS_RET = 0;
+        static const int INET_ATON_FAILED_RET = 0;
 
 
 		/****

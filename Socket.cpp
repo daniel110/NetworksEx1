@@ -289,23 +289,26 @@ int Socket::setSocketAddr(struct sockaddr_in& address,
 	address.sin_port = htons(port);
 
 	int ret = inet_aton(host.c_str(), &(address.sin_addr));
-	if (1 != ret)
+	if (INET_ATON_FAILED_RET == ret)
 	{
-		/* trying to convert host to ip address */
-		struct hostent* hp = gethostbyname(host.c_str());
-		if (NULL == hp)
+		struct addrinfo hints, *servinfo;
+		memset(&hints, 0, sizeof hints);
+
+		hints.ai_family = AF_INET; // ipv4 address only
+		hints.ai_socktype = SOCK_STREAM;
+
+		std::string portStr = std::to_string(port);
+		if (GETADDRINFO_SUCCESS_RET != getaddrinfo(host.c_str(),
+												portStr.c_str(),
+												&hints,
+												&servinfo) )
 		{
-			return RES_INVALID_ADDRESS;
+		    return RES_INVALID_ADDRESS;
 		}
 
-		/* get only the first ip of the host */
-		struct in_addr* ipAdd = (struct in_addr*) hp->h_addr_list[0];
-		if (NULL == ipAdd)
-		{
-			return RES_INVALID_ADDRESS;
-		}
-
-		address.sin_addr = *ipAdd;
+		/* copy data to address, and free servinfo */
+		memcpy(&address, servinfo->ai_addr, sizeof(struct sockaddr_in));
+		freeaddrinfo(servinfo);
 	}
 
 	return RES_SUCCESS;
