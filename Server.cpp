@@ -410,7 +410,7 @@ void * Server::debugPrintUserList(std::list<User*>& list)
 		User * user = *it;
 
 
-		sprintf(buflog, "%s - %s", user->m_userName.c_str(), user->m_pass.c_str());
+		sprintf(buflog, "%.10s - %.10s", user->m_userName.c_str(), user->m_pass.c_str());
 		printDebugLog(buflog, DEBUGLEVEL::INFO_MORE);
 
 
@@ -633,7 +633,7 @@ void Server::printDebugLog(const char * buf, ServerSessionSocket& session, DEBUG
 		}
 		else
 		{
-			sprintf(buflog, "user %s: ", session.getInbox()->getUser().getUserName().c_str());
+			sprintf(buflog, "user %.10s: ", session.getInbox()->getUser().getUserName().c_str());
 		}
 
 		strcat(buflog, buf);

@@ -20,7 +20,7 @@ private:
 
 
 public:
-	static const long MAX_FIELD_LENGTH = 1024;
+	static const long MAX_FIELD_LENGTH = 10000;
 
 	/* Create an empty packet. */
 	Packet();
