@@ -227,6 +227,8 @@ int Socket::recvMessage(Packet& packet) const
 		return RES_BAD_MESSAGE_FORMAT;
 	}
 
+	messageSize = ntohl(messageSize);
+
 	if (messageSize > MAX_PACKET_LENGTH)
 	{
 		return RES_PACKET_TOO_LONG;
@@ -256,6 +258,8 @@ int Socket::sendMessage(const Packet& packet) const
 	{
 		return RES_PACKET_TOO_LONG;
 	}
+
+	packetSize = htonl(packetSize);
 
 	int res = sendAll((char*)&packetSize , sizeof(packetSize));
 	if (Socket::RES_SUCCESS != res)

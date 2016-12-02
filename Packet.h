@@ -2,6 +2,7 @@
 
 #include <string>
 #include <stdlib.h>
+#include <netinet/in.h> /* htonl, ntohl */
 
 /* Packet Class
  *
@@ -61,11 +62,11 @@ public:
 	 * @return True on success. If false, Not enough byte forward available. */
 	bool readForwardString(std::string& out, unsigned long length);
 
-	/* Write a DWord (32 bit little endian number) into the packet.
+	/* Write a DWord (4 bytes network byte order number) into the packet.
 	 * Use allocateForward() if needed.
 	 * @return True on success. If false, the state of the packet is saved. */
 	bool writeForwardDWord(int32_t value);
-	/* Read a DWord (32 bit little endian number) from the packet.
+	/* Read a DWord (4 bytes network byte order number) from the packet.
 	 * @return True on success. If false, Not enough byte forward available. */
 	bool readForwardDWord(int32_t& output);
 

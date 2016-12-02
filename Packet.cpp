@@ -23,7 +23,14 @@ Packet::~Packet()
 
 bool Packet::writeForwardStringField(const std::string& str)
 {
-	bool res = writeForwardDWord(str.size() + 1);
+	int32_t length = str.size() + 1;
+
+	if (length > MAX_FIELD_LENGTH)
+	{
+		return false;
+	}
+
+	bool res = writeForwardDWord(length);
 	if (res == false)
 	{
 		return false;
@@ -95,7 +102,7 @@ bool Packet::writeForwardDWord(int32_t value)
 {
 	if (true == allocateForward(sizeof(value)))
 	{
-		*reinterpret_cast<int32_t*>(m_buff + m_cur) = value;
+		*reinterpret_cast<int32_t*>(m_buff + m_cur) = htonl(value);
 		m_cur += sizeof(value);
 		return true;
 	}
@@ -107,7 +114,7 @@ bool Packet::readForwardDWord(int32_t& output)
 {
 	if (bytesLeft() >= sizeof(output))
 	{
-		output = *reinterpret_cast<int32_t*>(m_buff + m_cur);
+		output = ntohl(*reinterpret_cast<int32_t*>(m_buff + m_cur));
 		m_cur += sizeof(output);
 		return true;
 	}
