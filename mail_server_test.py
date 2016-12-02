@@ -365,22 +365,22 @@ class TestMailServer(unittest.TestCase):
 
         time.sleep(1)
 
-        self.assertEqual(client_socket.recv(256), b'*\x00\x00\x00\t\x00\x00\x00"\x00\x00\x00Welcome! I am simple-mail-server.\x00')
+        self.assertEqual(client_socket.recv(256), b'\x00\x00\x00*\x00\x00\x00\t\x00\x00\x00"Welcome! I am simple-mail-server.\x00')
 
-        packet = struct.pack("<II", 4, 555)
+        packet = struct.pack("!II", 4, 555)
         client_socket.send(packet)
         time.sleep(1)
         result = client_socket.recv(256)
 
-        self.assertEqual(result, b'\x08\x00\x00\x00\x08\x00\x00\x00\x03\x00\x00\x00')
+        self.assertEqual(result, b'\x00\x00\x00\x08\x00\x00\x00\x08\x00\x00\x00\x03')
 
-        packet = struct.pack("<II", 4, 9999)
+        packet = struct.pack("!II", 4, 9999)
         client_socket.send(packet)
 
         time.sleep(1)
         result = client_socket.recv(256)
 
-        self.assertEqual(result, b'\x08\x00\x00\x00\x08\x00\x00\x00\x03\x00\x00\x00')
+        self.assertEqual(result, b'\x00\x00\x00\x08\x00\x00\x00\x08\x00\x00\x00\x03')
 
     # --- PRIVATE --- #
 
