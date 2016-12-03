@@ -178,7 +178,7 @@ class TestMailServer(unittest.TestCase):
         self._send("User: %s\n" % user[0])
         self._send("Password: %sxx\n" % user[1])
 
-        self.assertEqual(self._recv(), b"Failed on Login: Unknown password.\n")
+        self.assertEqual(self._recv(), b"Failed on Login: Wrong password.\n")
 
     def test_b_compose(self):
         self._connect(self._get_user(0))
