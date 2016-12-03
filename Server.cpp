@@ -188,7 +188,7 @@ void Server::sessionLogin(ServerSessionSocket& session)
 	/* Check the password of the user */
 	if (inbox->getUser().isPassCorrect(pass_field) == false)
 	{
-		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNKNOWN_USER);
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_WRONG_PASS);
 		return;
 	}
 

@@ -746,6 +746,11 @@ bool Client::convertFromGeneralResMessageIdToString(GeneralRespondStatuses messa
 			result += "Unknown user name.";
 			break;
 		}
+		case GENERAL_RESPOND_STATUS_WRONG_PASS:
+		{
+			result += "Wrong password.";
+			break;
+		}
 		case GENERAL_RESPOND_STATUS_NOT_LOGGED_IN:
 		{
 			result += "User is not logged in.";

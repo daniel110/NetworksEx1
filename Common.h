@@ -29,11 +29,7 @@ enum GeneralRespondStatuses
 
 	GENERAL_RESPOND_STATUS_SUCCESS = 0,
 	GENERAL_RESPOND_STATUS_UNKNOWN_USER = 1,
-
-	/* We do not allow the client to distinguish between user name not found
-	 * and password is incorrect for security reasons */
-	//GENERAL_RESPOND_STATUS_WRONG_PASS = 2,
-
+	GENERAL_RESPOND_STATUS_WRONG_PASS = 2,
 	GENERAL_RESPOND_STATUS_NOT_LOGGED_IN = 3,
 	GENERAL_RESPOND_STATUS_UNKNOWN_MAIL_ID = 4,
 	GENERAL_RESPOND_STATUS_USER_ALREADY_LOGGEDON = 5,
