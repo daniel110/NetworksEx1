@@ -345,6 +345,5 @@ class TestMailServer(unittest.TestCase):
         return self.client.recv()
 
 
-
 if __name__ == "__main__":
     unittest.main()
