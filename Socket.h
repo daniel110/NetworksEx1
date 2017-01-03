@@ -86,7 +86,7 @@ class Socket
         int bind (const std::string& ip, const u_int16_t port);
 
         /***
-	     * start listen on socket, allow *maxConnections* simultaneously
+	     * start listen on socket, allow *maxConnections* waiting in the queue simultaneously
 	     *
 	     *
 		 * @return:

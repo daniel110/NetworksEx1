@@ -50,7 +50,7 @@ void Server::start()
 	std::list<ServerSessionSocket*>::iterator it;
 
 	/* Start ti listen */
-	socket_res = listener.listen(MAX_CONNECTIONS);
+	socket_res = listener.listen(MAX_CONNECTIONS_QUEUE);
 	if (Socket::RES_SUCCESS != socket_res)
 	{
 		printSocketError(socket_res);

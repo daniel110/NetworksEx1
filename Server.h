@@ -41,7 +41,7 @@ class Server
 
 		/*	Default values */
 		static const long DEFAULT_PORT = 6423;
-		static const long MAX_CONNECTIONS = 2;
+		static const long MAX_CONNECTIONS_QUEUE = 50;
 
 		/* Create a server and bind a socket with the port and ANY_IP.
 		 *
