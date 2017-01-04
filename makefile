@@ -1,7 +1,7 @@
 CPP = g++
 
 OBJS_Server = mainServer.o Server.o FDSet.o Common.o Inbox.o MailObj.o Packet.o Socket.o ServerSessionSocket.o User.o 
-OBJS_Client = mainClient.o Client.o Common.o Packet.o Socket.o
+OBJS_Client = mainClient.o Client.o Common.o Packet.o Socket.o FDSet.o
 
 #The executabel filename
 EXEC_Server = mail_server
@@ -17,7 +17,7 @@ $(EXEC_Server): $(OBJS_Server)
 $(EXEC_Client): $(OBJS_Client)
 	$(CPP) $(OBJS_Client) -o $@
 
-Client.o: Client.cpp Client.h Socket.h Packet.h Common.h
+Client.o: Client.cpp Client.h Socket.h Packet.h Common.h  FDSet.h
 	$(CPP) $(CPP_COMP_FLAG) -c $*.cpp
 
 mainServer.o: mainServer.cpp Server.h User.h Packet.h Inbox.h MailObj.h ServerSessionSocket.h Socket.h Common.h FDSet.h

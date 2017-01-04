@@ -27,12 +27,19 @@ public:
 
 	/* Add a socket to the socket we will select from */
 	void add(const Socket& sock);
+	/* Computability for stdin/stdout */
+	void add(FILE * in);
+
 	/* Check if the given socket has new data or new connection.
 	 * Returns true if so.
 	 */
 	bool check(const Socket& sock);
+	/* Computability for stdin/stdout */
+	bool check(FILE * in);
+
 	/* Clear all sockets from the list */
 	void clear();
+
 	/* This method calls select system call with all the socket you added usiging add().
 	 * This method is blocking
 	 */

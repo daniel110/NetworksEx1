@@ -56,6 +56,9 @@ class Client
 		bool recvWelcomeMessage(std::string& result);
 
 
+		void handleUserRequest(bool& keepGoing, std::string& resultStr);
+		void handleServerRequest(bool& keepGoing, std::string& resultStr);
+
 		/************
 		 * commands *
 		 ************/
@@ -71,7 +74,7 @@ class Client
 		bool commandCompose(std::string& result);
 		bool commandShowOnlineUsers(std::string& result);
 		bool commandSendChatMessage(std::string& message, std::string& result);
-		bool handleChatMessageReceive(std::string& result);
+		bool handleChatMessageReceive(Packet& serverPacket, std::string& result);
 
 
 		/****
