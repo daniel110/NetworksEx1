@@ -9,6 +9,8 @@ const std::string Client::COMMAND_GET_MAIL = "GET_MAIL";
 const std::string Client::COMMAND_DELETE_MAIL = "DELETE_MAIL" ;
 const std::string Client::COMMAND_QUIT = "QUIT";
 const std::string Client::COMMAND_COMPOSE = "COMPOSE";
+const std::string Client::COMMAND_SHOW_USERS = "SHOW_ONLINE_USERS";
+const std::string Client::COMMAND_SEND_CHAT = "MSG";
 
 
 const std::string Client::PREFIX_INPUT_USER = "User:";
@@ -32,6 +34,9 @@ const std::string Client::USER_MESSAGE_COMPOSE_SUCCESS = "Mail sent";
 const std::string Client::ERROR_FAILED_TO_READ_USER_INPUT = "Unable to read command - Going down";
 const std::string Client::ERROR_FAILED_TO_EXTRACT_COMMAND_FROM_USER_INPUT = "Unable to extract command type";
 
+
+const std::string Client::SEND_CHAT_DEST_SUFFIX = ":";
+const std::string Client::SEND_CHAT_DEST_MESSAGE_DELIMITER = " ";
 
 
 Client::Client(std::string& hostname, u_int16_t port) : m_hostname(hostname)
@@ -105,7 +110,7 @@ void Client::start()
 			{
 				if (!inputStream.eof())
 				{
-					resultStr = "The second and last parameter of GET_MAIL should be int";
+					resultStr = "The first and last parameter of GET_MAIL should be int";
 				}
 				else
 				{
@@ -125,7 +130,7 @@ void Client::start()
 			{
 				if (!inputStream.eof())
 				{
-					resultStr = "The second and last parameter of DELETE_MAIL should be int";
+					resultStr = "The first and last parameter of DELETE_MAIL should be int";
 				}
 				else
 				{
@@ -145,6 +150,56 @@ void Client::start()
 			if (inputStream.eof())
 			{
 				keepGoing = commandQuit(resultStr);
+			}
+		}
+		else if (0 == commandTypeName.compare(COMMAND_SHOW_USERS))
+		{
+			if (inputStream.eof())
+			{
+				keepGoing = commandShowOnlineUsers(resultStr);
+			}
+		}
+		else if (0 == commandTypeName.compare(COMMAND_SEND_CHAT))
+		{
+			std::string to;
+			std::string message;
+			std::string fullMessasge;
+
+			/* pretty ugly code section, sorry =] */
+
+			inputStream >> to;
+			if (inputStream.fail() ||
+					/* check that destination field ends with SEND_CHAT_DEST_SUFFIX */
+					(to.size()-1) != to.find_last_of(SEND_CHAT_DEST_SUFFIX))
+			{
+				resultStr = "Unable to extract destination user(first parameter of MSG), "
+									"be aware it should be end with ':' .";
+			}
+			else
+			{
+				inputStream >> message;
+				if (inputStream.fail() )
+				{
+					resultStr = "Unable to extract message (second parameter of MSG)";
+				}
+				else
+				{
+					if (!inputStream.eof())
+					{
+						resultStr = "The second and last parameter of MSG should be message info";
+					}
+					else
+					{
+						/* pop_back remove the last char (must be SEND_CHAT_DEST_SUFFIX) */
+						to.pop_back();
+
+						fullMessasge = to;
+						fullMessasge += SEND_CHAT_DEST_MESSAGE_DELIMITER;
+						fullMessasge += message;
+
+						keepGoing = commandSendChatMessage(fullMessasge, resultStr);
+					}
+				}
 			}
 		}
 		else
@@ -336,6 +391,7 @@ bool Client::commandLogin(std::string& result)
 	result = USER_MESSAGE_LOGIN_SUCCESS;
 	return true;
 }
+
 bool Client::commandShowInbox(std::string& result)
 {
 	result = "Failed on Show Inbox: ";
@@ -415,6 +471,7 @@ bool Client::commandShowInbox(std::string& result)
 	result.clear();
 	return true;
 }
+
 bool Client::commandGetMail(unsigned int mailId, std::string& result)
 {
 	result = "Failed on Get Mail: ";
@@ -539,6 +596,7 @@ bool Client::commandGetMail(unsigned int mailId, std::string& result)
 	result.clear();
 	return true;
 }
+
 bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 {
 	result = "Failed on delete mail: ";
@@ -601,6 +659,7 @@ bool Client::commandDeleteMail(unsigned int mailId, std::string& result)
 	result.clear();
 	return true;
 }
+
 bool Client::commandQuit(std::string& result)
 {
 	result = "Error on quit: ";
@@ -620,6 +679,7 @@ bool Client::commandQuit(std::string& result)
 	result.clear();
 	return false;
 }
+
 bool Client::commandCompose(std::string& result)
 {
 	result = "Failed on compose mail: ";
@@ -709,6 +769,206 @@ bool Client::commandCompose(std::string& result)
 	result = USER_MESSAGE_COMPOSE_SUCCESS;
 	return true;
 }
+
+
+bool Client::commandShowOnlineUsers(std::string& result)
+{
+	result = "Failed on Show online users: ";
+
+	/***************
+	 * BuildPacket *
+	 ***************/
+	Packet showUsersPack;
+	showUsersPack.writeForwardDWord(COMMANDTYPE_SHOW_ONLINE_USERS_REQ);
+
+	if (false == sendCommandAndLogSocketError(showUsersPack,result))
+	{
+		return false;
+	}
+
+	/* receive response packet */
+	Packet resPacket;
+	if (false == receiveRespondAndLogSocketError(resPacket,result))
+	{
+		return false;
+	}
+
+	/**********************
+	 * Check command type *
+	 **********************/
+	int32_t commandType;
+	if (false == resPacket.readForwardDWord(commandType))
+	{
+		result += "Unable to read command type";
+		return false;
+	}
+
+	if (COMMANDTYPE_SHOW_ONLINE_USERS_RES != commandType)
+	{
+		std::string resMessage;
+
+		GeneralRespondStatuses stat = parseGeneralResponse(commandType,
+																	resPacket,
+																	resMessage);
+		if (GENERAL_RESPOND_UNKNOWN_STATUS == stat)
+		{
+			result += "Error on parsing response " + resMessage;
+			return false;
+		}
+
+		if (false == convertFromGeneralResMessageIdToString(stat,
+												resMessage))
+		{
+			result += resMessage;
+			return false;
+		}
+
+		result += resMessage;
+		return true;
+	}
+
+	/*****************
+	 * Parse command *
+	 *****************/
+	std::string usersInfo;
+
+	if (false == resPacket.readForwardStringField(usersInfo))
+	{
+		result += "Failed to read online user from packet";
+		return true;
+	}
+
+	result = usersInfo;
+	return true;
+}
+
+bool Client::commandSendChatMessage(std::string& message, std::string& result)
+{
+	result = "Failed on send chat message: ";
+
+	/***************
+	 * BuildPacket *
+	 ***************/
+	Packet chatMessagePack;
+	chatMessagePack.writeForwardDWord(COMMANDTYPE_SEND_CHAT_MESSAGE_REQ);
+	chatMessagePack.writeForwardStringField(message);
+;
+
+	/* send packet */
+	if (false == sendCommandAndLogSocketError(chatMessagePack,result))
+	{
+		return false;
+	}
+
+	/* receive response packet */
+	Packet resPacket;
+	if (false == receiveRespondAndLogSocketError(resPacket,result))
+	{
+		return false;
+	}
+
+
+	/**********************
+	 * Check command type *
+	 **********************/
+	int32_t commandType;
+	if (false == resPacket.readForwardDWord(commandType))
+	{
+		result += "Unable to read command type";
+		return false;
+	}
+
+	/* parse respond */
+	std::string resMessage;
+
+	GeneralRespondStatuses stat = parseGeneralResponse(commandType,
+																resPacket,
+																resMessage);
+	if (GENERAL_RESPOND_UNKNOWN_STATUS == stat)
+	{
+		result += "Error on parsing response " + resMessage;
+		return false;
+	}
+
+	if (GENERAL_RESPOND_STATUS_SUCCESS != stat)
+	{
+		if (false == convertFromGeneralResMessageIdToString(stat,
+												resMessage))
+		{
+			result += resMessage;
+			return false;
+		}
+
+		result += resMessage;
+		return true;
+	}
+
+	result.clear();
+	return true;
+}
+
+bool Client::handleChatMessageReceive(std::string& result)
+{
+	/* do nothing - just set the result to be the message - and it will be print to the user */
+	result = "Failed on receiving chat message: ";
+
+
+	/* receive response packet */
+	Packet resPacket;
+	if (false == receiveRespondAndLogSocketError(resPacket,result))
+	{
+		return false;
+	}
+
+	/**********************
+	 * Check command type *
+	 **********************/
+	int32_t commandType;
+	if (false == resPacket.readForwardDWord(commandType))
+	{
+		result += "Unable to read command type";
+		return false;
+	}
+
+	if (COMMANDTYPE_FORWARD_CHAT_MESSAGE != commandType)
+	{
+		std::string resMessage;
+
+		GeneralRespondStatuses stat = parseGeneralResponse(commandType,
+																	resPacket,
+																	resMessage);
+		if (GENERAL_RESPOND_UNKNOWN_STATUS == stat)
+		{
+			result += "Error on parsing response " + resMessage;
+			return false;
+		}
+
+		if (false == convertFromGeneralResMessageIdToString(stat,
+												resMessage))
+		{
+			result += resMessage;
+			return false;
+		}
+
+		result += resMessage;
+		return true;
+	}
+
+	/*****************
+	 * Parse command *
+	 *****************/
+	std::string message;
+
+	if (false == resPacket.readForwardStringField(message))
+	{
+		result += "Failed to read message from packet";
+		return true;
+	}
+
+	result = message;
+	return true;
+}
+
 
 GeneralRespondStatuses Client::parseGeneralResponse( long commandType,
 									Packet& pack,

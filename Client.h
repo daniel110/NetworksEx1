@@ -69,6 +69,9 @@ class Client
 		bool commandDeleteMail(unsigned int mailId, std::string& result);
 		bool commandQuit(std::string& result);
 		bool commandCompose(std::string& result);
+		bool commandShowOnlineUsers(std::string& result);
+		bool commandSendChatMessage(std::string& message, std::string& result);
+		bool handleChatMessageReceive(std::string& result);
 
 
 		/****
@@ -151,6 +154,8 @@ class Client
 		static const std::string COMMAND_DELETE_MAIL;
 		static const std::string COMMAND_QUIT;
 		static const std::string COMMAND_COMPOSE;
+		static const std::string COMMAND_SHOW_USERS;
+		static const std::string COMMAND_SEND_CHAT;
 
 
 		/********************************************
@@ -184,6 +189,12 @@ class Client
 		 **********/
 		static const std::string ERROR_FAILED_TO_READ_USER_INPUT;
 		static const std::string ERROR_FAILED_TO_EXTRACT_COMMAND_FROM_USER_INPUT;
+
+		/****************
+		 * Chat Message *
+		 ****************/
+		static const std::string SEND_CHAT_DEST_SUFFIX;
+		static const std::string SEND_CHAT_DEST_MESSAGE_DELIMITER;
 
 };
 
