@@ -73,7 +73,9 @@ class Client
 		bool commandQuit(std::string& result);
 		bool commandCompose(std::string& result);
 		bool commandShowOnlineUsers(std::string& result);
-		bool commandSendChatMessage(std::string& message, std::string& result);
+		bool commandSendChatMessage(std::string& to,
+									std::string& message,
+									std::string& result);
 		bool handleChatMessageReceive(Packet& serverPacket, std::string& result);
 
 
@@ -197,7 +199,6 @@ class Client
 		 * Chat Message *
 		 ****************/
 		static const std::string SEND_CHAT_DEST_SUFFIX;
-		static const std::string SEND_CHAT_DEST_MESSAGE_DELIMITER;
 
 };
 

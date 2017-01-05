@@ -37,7 +37,6 @@ const std::string Client::ERROR_FAILED_TO_EXTRACT_COMMAND_FROM_USER_INPUT = "Una
 
 
 const std::string Client::SEND_CHAT_DEST_SUFFIX = ":";
-const std::string Client::SEND_CHAT_DEST_MESSAGE_DELIMITER = " ";
 
 
 Client::Client(std::string& hostname, u_int16_t port) : m_hostname(hostname)
@@ -728,7 +727,9 @@ bool Client::commandShowOnlineUsers(std::string& result)
 	return true;
 }
 
-bool Client::commandSendChatMessage(std::string& message, std::string& result)
+bool Client::commandSendChatMessage(std::string& to,
+									std::string& message,
+									std::string& result)
 {
 	result = "Failed on send chat message: ";
 
@@ -737,8 +738,9 @@ bool Client::commandSendChatMessage(std::string& message, std::string& result)
 	 ***************/
 	Packet chatMessagePack;
 	chatMessagePack.writeForwardDWord(COMMANDTYPE_SEND_CHAT_MESSAGE_REQ);
+	chatMessagePack.writeForwardStringField(to);
 	chatMessagePack.writeForwardStringField(message);
-;
+
 
 	/* send packet */
 	if (false == sendCommandAndLogSocketError(chatMessagePack,result))
@@ -1126,7 +1128,6 @@ void Client::handleUserRequest(bool& keepGoing, std::string& resultStr)
 	{
 		std::string to;
 		std::string message;
-		std::string fullMessasge;
 
 		/* pretty ugly code section, sorry =] */
 
@@ -1156,11 +1157,7 @@ void Client::handleUserRequest(bool& keepGoing, std::string& resultStr)
 					/* pop_back remove the last char (must be SEND_CHAT_DEST_SUFFIX) */
 					to.pop_back();
 
-					fullMessasge = to;
-					fullMessasge += SEND_CHAT_DEST_MESSAGE_DELIMITER;
-					fullMessasge += message;
-
-					keepGoing = commandSendChatMessage(fullMessasge, resultStr);
+					keepGoing = commandSendChatMessage(to, message, resultStr);
 				}
 			}
 		}
