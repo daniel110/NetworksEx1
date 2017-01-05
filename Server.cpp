@@ -396,6 +396,8 @@ void Server::sessionRequestSendChatMessage(ServerSessionSocket& session, Packet&
 			return;
 		}
 
+		chat_packet.jumptoStart();
+
 		/* Create mail object from packet and add it to the inbox. */
 		MailObj mail;
 		if (true != mail.setMailAsPacket(session.getInbox()->getUser().getUserName(), chat_packet))
