@@ -888,6 +888,11 @@ bool Client::convertFromGeneralResMessageIdToString(GeneralRespondStatuses messa
 			result += "Server got unknown command - try different command.";
 			break;
 		}
+		case GENERAL_RESPOND_STATUS_UNKNOWN_USER_CHAT:
+		{
+			result += "User does not register in the server.";
+			break;
+		}
 		case GENERAL_RESPOND_STATUS_SESSION_FAILURE:
 		{
 			result += "Server connection error - going down.";

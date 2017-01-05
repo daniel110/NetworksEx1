@@ -249,10 +249,10 @@ void Server::sessionCommandRequest(ServerSessionSocket& session)
 		session.close();
 		break;
 	case COMMANDTYPE_SHOW_ONLINE_USERS_REQ:
-		//session.close();
+		sessionRequestShowOnlineUsers(session, message);
 		break;
 	case COMMANDTYPE_SEND_CHAT_MESSAGE_REQ:
-		//session.close();
+		sessionRequestSendChatMessage(session, message);
 		break;
 	default:
 		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
@@ -330,6 +330,7 @@ void Server::sessionRequestSendChatMessage(ServerSessionSocket& session, Packet&
 	if (rcv_inbox == nullptr)
 	{
 		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNKNOWN_USER_CHAT);
+		return;
 	}
 
 
@@ -355,6 +356,13 @@ void Server::sessionRequestSendChatMessage(ServerSessionSocket& session, Packet&
 			session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
 			return;
 		}
+
+		/* Send first the response and then send the chat message.
+		 * This is because we could send chat message to the same user,
+		 * so the client first expect to get the response and just then the chat
+		 * message.
+		 */
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_SUCCESS);
 
 		if (Socket::RES_SUCCESS != rcv_session->sendMessage(chat_packet))
 		{
@@ -397,9 +405,11 @@ void Server::sessionRequestSendChatMessage(ServerSessionSocket& session, Packet&
 		}
 
 		rcv_inbox->addMail(mail);
+
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_SUCCESS);
 	}
 
-	session.sendGeneralRespond(GENERAL_RESPOND_STATUS_SUCCESS);
+
 
 }
 

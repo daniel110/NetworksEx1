@@ -94,7 +94,7 @@ class Server
 			INFO,
 			INFO_MORE,
 		};
-        DEBUGLEVEL debug_log = NO_LOG;
+        DEBUGLEVEL debug_log = INFO_MORE;
 
     private:
         /* The internal state of the server */
