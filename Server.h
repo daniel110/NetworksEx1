@@ -166,10 +166,18 @@ class Server
         void sessionRequestGetMail(ServerSessionSocket& session, Packet& message);
         void sessionRequestDeleteMail(ServerSessionSocket& session, Packet& message);
         void sessionRequestCompose(ServerSessionSocket& session, Packet& message);
+        void sessionRequestShowOnlineUsers(ServerSessionSocket& session, Packet& message);
+        void sessionRequestSendChatMessage(ServerSessionSocket& session, Packet& message);
 
         /* Print strings to user */
         bool printSocketError(int result);
         bool printStringToUser(const char* output);
+
+        /* *************************
+         * Session Requests Helpers
+         * ************************
+         */
+        bool sessionWriteOnlineUsers(Packet& response);
 
         /* *************************
          * Debug methods

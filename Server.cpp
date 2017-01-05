@@ -248,6 +248,12 @@ void Server::sessionCommandRequest(ServerSessionSocket& session)
 	case COMMANDTYPE_QUIT_REQ:
 		session.close();
 		break;
+	case COMMANDTYPE_SHOW_ONLINE_USERS_REQ:
+		//session.close();
+		break;
+	case COMMANDTYPE_SEND_CHAT_MESSAGE_REQ:
+		//session.close();
+		break;
 	default:
 		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
 		break;
@@ -274,6 +280,158 @@ void Server::sessionRequestShowInbox(ServerSessionSocket& session, Packet& messa
 	}
 
 	session.sendMessage(response);
+}
+
+void Server::sessionRequestShowOnlineUsers(ServerSessionSocket& session, Packet& message)
+{
+	Packet response;
+
+	printDebugLog("sessionRequestShowOnlineUsers", session, DEBUGLEVEL::EVENTS);
+
+	if (false == response.writeForwardDWord(COMMANDTYPE_SHOW_ONLINE_USERS_RES))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+		return;
+	}
+
+	if (false == this->sessionWriteOnlineUsers(response))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+		return;
+	}
+
+	session.sendMessage(response);
+}
+
+void Server::sessionRequestSendChatMessage(ServerSessionSocket& session, Packet& message)
+{
+	Packet response;
+
+	printDebugLog("sessionRequestSendChatMessage", session, DEBUGLEVEL::EVENTS);
+
+	std::string recv_user;
+	std::string chat_message;
+	Inbox * rcv_inbox;
+	Packet chat_packet;
+
+	if (false == message.readForwardStringField(recv_user))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		return;
+	}
+
+	if (false == message.readForwardStringField(chat_message))
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNVALID_MESSAGE);
+		return;
+	}
+
+	rcv_inbox = getInboxFromUserString(recv_user);
+	if (rcv_inbox == nullptr)
+	{
+		session.sendGeneralRespond(GENERAL_RESPOND_STATUS_UNKNOWN_USER_CHAT);
+	}
+
+
+
+	if ((rcv_inbox->isLogged() == true) && (rcv_inbox->getSession() != nullptr))
+	{
+		/* The user is online so we build a string of the visible message to the client */
+
+		ServerSessionSocket * rcv_session = rcv_inbox->getSession();
+		std::string forward_msg = "New message from ";
+		forward_msg += session.getInbox()->getUser().getUserName() + ": ";
+		forward_msg += chat_message;
+
+		/* Build the response packet, type with a string */
+		if (false == chat_packet.writeForwardDWord(COMMANDTYPE_FORWARD_CHAT_MESSAGE))
+		{
+			session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+			return;
+		}
+
+		if (false == chat_packet.writeForwardStringField(forward_msg))
+		{
+			session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+			return;
+		}
+
+		if (Socket::RES_SUCCESS != rcv_session->sendMessage(chat_packet))
+		{
+			session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+			return;
+		}
+
+	}
+	else
+	{
+
+		/* Here we build a Mail obj with fields as a real mail packet:
+		 * To field */
+		if (false == chat_packet.writeForwardStringField(recv_user))
+		{
+			session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+			return;
+		}
+
+		/* Subject field */
+		if (false == chat_packet.writeForwardStringField("Message received offline"))
+		{
+			session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+			return;
+		}
+
+		/* Text field */
+		if (false == chat_packet.writeForwardStringField(chat_message))
+		{
+			session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+			return;
+		}
+
+		/* Create mail object from packet and add it to the inbox. */
+		MailObj mail;
+		if (true != mail.setMailAsPacket(session.getInbox()->getUser().getUserName(), chat_packet))
+		{
+			session.sendGeneralRespond(GENERAL_RESPOND_STATUS_INTERNAL_FAILURE);
+			return;
+		}
+
+		rcv_inbox->addMail(mail);
+
+	}
+
+}
+
+bool Server::sessionWriteOnlineUsers(Packet& response)
+{
+	std::list<ServerSessionSocket*>::iterator it_begin = m_sessions.begin();
+	std::list<ServerSessionSocket*>::iterator it_end = m_sessions.end();
+	std::list<ServerSessionSocket*>::iterator it;
+
+	std::string users = "Online users: ";
+
+	for (std::list<ServerSessionSocket*>::iterator it = it_begin;
+			it != it_end;
+			++it)
+	{
+		ServerSessionSocket * session = *it;
+		if (session == nullptr)
+		{
+			return false;
+		}
+		Inbox * inb = session->getInbox();
+		if (inb == nullptr)
+		{
+			return false;
+		}
+
+		users += inb->getUser().getUserName() + ",";
+	}
+
+	users = users.substr(0, users.length()-1);
+	response.writeForwardStringField(users);
+
+	return true;
 }
 
 void Server::sessionRequestGetMail(ServerSessionSocket& session, Packet& message)
