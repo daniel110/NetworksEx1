@@ -42,6 +42,7 @@ void ServerSessionSocket::setInbox(Inbox* inbox)
 	if (inbox != nullptr)
 	{
 		inbox->m_loggedIn = true;
+		inbox->m_session = this;
 	}
 }
 
@@ -65,6 +66,7 @@ void ServerSessionSocket::close()
 	if (m_inbox != nullptr)
 	{
 		m_inbox->m_loggedIn = false;
+		m_inbox->m_session = nullptr;
 		m_inbox = nullptr;
 	}
 	Socket::close();

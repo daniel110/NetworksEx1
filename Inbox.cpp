@@ -1,12 +1,12 @@
 #include "Inbox.h"
 
-
 const std::string Inbox::SHOW_INBOX_MAIL_INFO_DELIMITER = " ";
 const std::string Inbox::SHOW_INBOX_MAIL_SUBJECT_WRAPPER = "\"";
 
 Inbox::Inbox(User& usr) : m_user(usr),
 							m_idOfLastMail(0) ,
-							m_loggedIn(false)
+							m_loggedIn(false) ,
+							m_session(nullptr)
 {
 	// empty
 }
@@ -159,4 +159,9 @@ bool Inbox::fromMailToShowInboxRaw(const MailObj* mail,
 bool Inbox::isLogged()
 {
 	return m_loggedIn;
+}
+
+ServerSessionSocket * Inbox::getSession()
+{
+	return m_session;
 }

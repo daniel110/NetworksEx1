@@ -1,9 +1,15 @@
 #pragma once
 
 #include <list>
-
 #include "MailObj.h"
 #include "User.h"
+
+/*	This declaration is necessary so that
+	we could go to the ServerSession if we got the Inbox.
+	This is useful for the server to get the session
+	after getting the inbox by user string.
+	*/
+class ServerSessionSocket;
 
 /* Inbox class
  *
@@ -69,12 +75,15 @@ class Inbox
 		 */
         bool isLogged();
 
+        ServerSessionSocket * getSession();
+
     private:
         User m_user;
         std::list<MailObj*> m_mails;
         unsigned long m_idOfLastMail;
 
         bool m_loggedIn;
+        ServerSessionSocket * m_session;
 
         /***
          * Get *mail* object and set *showInboxRaw* with a string which represent
