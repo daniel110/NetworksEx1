@@ -397,8 +397,9 @@ void Server::sessionRequestSendChatMessage(ServerSessionSocket& session, Packet&
 		}
 
 		rcv_inbox->addMail(mail);
-
 	}
+
+	session.sendGeneralRespond(GENERAL_RESPOND_STATUS_SUCCESS);
 
 }
 
