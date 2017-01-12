@@ -1153,17 +1153,18 @@ void Client::handleUserRequest(bool& keepGoing, std::string& resultStr)
 			}
 			else
 			{
+
 				if (!inputStream.eof())
 				{
-					resultStr = "The second and last parameter of MSG should be message info";
+					std::string restOfLine;
+					std::getline(inputStream, restOfLine);
+					message += restOfLine;
 				}
-				else
-				{
-					/* pop_back remove the last char (must be SEND_CHAT_DEST_SUFFIX) */
-					to.pop_back();
 
-					keepGoing = commandSendChatMessage(to, message, resultStr);
-				}
+				/* pop_back remove the last char (must be SEND_CHAT_DEST_SUFFIX) */
+				to.pop_back();
+
+				keepGoing = commandSendChatMessage(to, message, resultStr);
 			}
 		}
 	}
