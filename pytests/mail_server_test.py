@@ -247,10 +247,10 @@ class TestMailServer(unittest.TestCase):
         self.assertEqual(self._recv(), b"Unable to extract mail id.\n")
 
         self._send("GET_MAIL 2 2\n")
-        self.assertEqual(self._recv(), b"The second and last parameter of GET_MAIL should be int\n")
+        self.assertEqual(self._recv(), b"The first and last parameter of GET_MAIL should be int\n")
 
         self._send("GET_MAIL 2.2\n")
-        self.assertEqual(self._recv(), b"The second and last parameter of GET_MAIL should be int\n")
+        self.assertEqual(self._recv(), b"The first and last parameter of GET_MAIL should be int\n")
 
     def test_j_bad_delete_mail_id(self):
         user1 = self._get_user(1)
@@ -265,11 +265,11 @@ class TestMailServer(unittest.TestCase):
 
         self._send("DELETE_MAIL 2 2\n")
         self.assertEqual(self._recv(),
-                         b"The second and last parameter of DELETE_MAIL should be int\n")
+                         b"The first and last parameter of DELETE_MAIL should be int\n")
 
         self._send("DELETE_MAIL 2.2\n")
         self.assertEqual(self._recv(),
-                         b"The second and last parameter of DELETE_MAIL should be int\n")
+                         b"The first and last parameter of DELETE_MAIL should be int\n")
 
     def test_k_extra_args(self):
         self._connect(self._get_user(1))
