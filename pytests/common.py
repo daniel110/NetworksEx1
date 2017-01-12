@@ -12,7 +12,7 @@ CWD = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 MAIL_SERVER_EXE = "./mail_server"
 USERS_FILE = os.path.join(CWD, "pytests", "test_users_file")
 EMPTY_USERS_FILE = os.path.join(CWD, "pytests", "empty_users_file")
-SERVER_PORT = 5650 + random.randint(1, 19)
+SERVER_PORT = 5650 + random.randint(1, 100)
 
 MAIL_CLIENT_EXE = "./mail_client"
 DEFAULT_HOST = "localhost"
