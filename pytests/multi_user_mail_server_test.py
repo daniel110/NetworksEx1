@@ -5,6 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from queue import Empty
 import unittest
 import random
+import time
 
 from pytests.commands import *
 from pytests.common import Client
@@ -152,7 +153,7 @@ class TestMailServer(unittest.TestCase):
 
             self.assertEqual(res, ("%s\n%s\n" % (expected_mail1, expected_mail2)).encode())
 
-    def test_f_check_show_online_command(self):
+    def test_f_show_online_command(self):
         for i, client in enumerate(self.clients):
             self._connect(client, self._get_user(i))
 
@@ -161,10 +162,10 @@ class TestMailServer(unittest.TestCase):
         self._send(SHOW_ONLINE_USERS_CMD, client)
         res = self._recv(client)
 
-        self.assertEquals(res, (ONLINE_USERS_RESPONSE_FORMAT % ",".join([self._get_user(i)[0]
+        self.assertEqual(res, (ONLINE_USERS_RESPONSE_FORMAT % ",".join([self._get_user(i)[0]
                                                                          for i in range(len(self.clients))])).encode())
 
-    def test_g_check_msg_command(self):
+    def test_g_msg_command(self):
         for i, client in enumerate(self.clients):
             self._connect(client, self._get_user(i))
 
@@ -176,7 +177,118 @@ class TestMailServer(unittest.TestCase):
         self._send(MSG_CMD_FORMAT % (self._get_user(1)[0], text), client0)
         res = self._recv(client1)
 
-        self.assertEquals(res, (MSG_RESPONSE_FORMAT % (self._get_user(0)[0], text)).encode())
+        self.assertEqual(res, (MSG_RESPONSE_FORMAT % (self._get_user(0)[0], text)).encode())
+
+    def test_h_msg_command_to_many_users(self):
+        for i, client in enumerate(self.clients):
+            self._connect(client, self._get_user(i))
+
+        client0 = self.clients[0]
+
+        text = "Demo message %d."
+
+        for i in range(1, len(self.clients)):
+            self._send(MSG_CMD_FORMAT % (self._get_user(i)[0], text % i), client0)
+            res = self._recv(self.clients[i])
+
+            self.assertEqual(res, (MSG_RESPONSE_FORMAT % (self._get_user(0)[0], text % i)).encode())
+
+    def test_i_msg_offline_user(self):
+        sender = self.clients[0]
+        receiver = self.clients[1]
+
+        sender_user = self._get_user(0)
+        receiver_user = self._get_user(1)
+
+        self._connect(sender, sender_user)
+
+        text = "Demo message."
+
+        self._send(MSG_CMD_FORMAT % (receiver_user[0], text), sender)
+
+        self._connect(receiver, receiver_user)
+        self._send(SHOW_INBOX_CMD, receiver)
+        res = self._recv(receiver)
+
+        self.assertEqual(res, ('1 %s "%s"\n' % (sender_user[0], OFFLINE_MSG_TITLE)).encode())
+
+        self._send(GET_MAIL_CMD % 1, receiver)
+        res = b""
+        while True:
+            try:
+                res += self._recv(receiver)
+            except Empty:
+                break
+
+        self.assertEqual(res, (RECV_MAIL_FORMAT % (sender_user[0],
+                                                   receiver_user[0],
+                                                   OFFLINE_MSG_TITLE,
+                                                   text)).encode('utf-8'))
+
+    def test_j_msg_command_when_connected_and_then_disconnected(self):
+        sender = self.clients[0]
+        receiver = self.clients[1]
+
+        sender_user = self._get_user(0)
+        receiver_user = self._get_user(1)
+
+        text1 = "Demo message 1."
+        text2 = "Demo message 2."
+
+        self._connect(sender, sender_user)
+        self._connect(receiver, receiver_user)
+
+        self._send(MSG_CMD_FORMAT % (receiver_user[0], text1), sender)
+        res = self._recv(receiver)
+
+        self.assertEqual(res, (MSG_RESPONSE_FORMAT % (sender_user[0], text1)).encode())
+
+        # Client 1 disconnects
+        receiver.stop()
+        time.sleep(4)
+
+        self._send(MSG_CMD_FORMAT % (receiver_user[0], text2), sender)
+
+        self._connect(receiver, receiver_user)
+        self._send(SHOW_INBOX_CMD, receiver)
+        res = self._recv(receiver)
+
+        self.assertEqual(res, ('1 %s "%s"\n' % (sender_user[0], OFFLINE_MSG_TITLE)).encode())
+
+        self._send(GET_MAIL_CMD % 1, receiver)
+        res = b""
+        while True:
+            try:
+                res += self._recv(receiver)
+            except Empty:
+                break
+
+        self.assertEqual(res, (RECV_MAIL_FORMAT % (sender_user[0],
+                                                   receiver_user[0],
+                                                   OFFLINE_MSG_TITLE,
+                                                   text2)).encode('utf-8'))
+
+    def test_k_ongoing_chat(self):
+        c0 = self.clients[0]
+        c1 = self.clients[1]
+
+        u0 = self._get_user(0)
+        u1 = self._get_user(1)
+
+        msgs0 = ["Hey!", "All good mate", "Yes, indeed", "No, thank you kind sir", "=)", "Bye!"]
+        msgs1 = ["Whats'uppp??", "Cool dude!", "Wanna get wasted??!", "K", "Bye!", "^_0"]
+
+        self._connect(c0, u0)
+        self._connect(c1, u1)
+
+        for i in range(len(msgs0)):
+            self._send(MSG_CMD_FORMAT % (u1[0], msgs0[i]), c0)
+            res = self._recv(c1)
+            self.assertEqual(res, (MSG_RESPONSE_FORMAT % (u0[0], msgs0[i])).encode())
+
+            self._send(MSG_CMD_FORMAT % (u0[0], msgs1[i]), c1)
+            res = self._recv(c0)
+            self.assertEqual(res, (MSG_RESPONSE_FORMAT % (u1[0], msgs1[i])).encode())
 
 
     # --- PRIVATE --- #

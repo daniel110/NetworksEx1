@@ -16,3 +16,5 @@ ONLINE_USERS_RESPONSE_FORMAT = "Online users: %s\n"
 
 MSG_CMD_FORMAT = "MSG %s: %s\n"
 MSG_RESPONSE_FORMAT = "New message from %s: %s\n"
+
+OFFLINE_MSG_TITLE = "Message received offline"
