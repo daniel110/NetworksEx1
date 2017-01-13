@@ -27,7 +27,7 @@ class TestMailServer(unittest.TestCase):
         cls.mail_server = Server()
         cls.mail_server.start()
 
-        clients_amount = random.randint(1, len(cls.users))
+        clients_amount = random.randint(2, len(cls.users))
         cls.clients = []
 
         for _ in range(clients_amount):
@@ -72,7 +72,7 @@ class TestMailServer(unittest.TestCase):
 
             self.assertEqual(self._recv(client), CONNECTION_SUCCESSFUL_STR)
 
-    def test_a_a_connect_bad_username(self):
+    def test_b_connect_bad_username(self):
         for i, client in enumerate(self.clients):
             user = self._get_user(i)
 
@@ -85,7 +85,7 @@ class TestMailServer(unittest.TestCase):
 
             self.assertEqual(self._recv(client), b"Failed on Login: Unknown user name.\n")
 
-    def test_a_b_connect_some_bad_username_some_ok(self):
+    def test_c_connect_some_bad_username_some_ok(self):
         for i, client in enumerate(self.clients):
             user = self._get_user(i)
 
@@ -103,7 +103,7 @@ class TestMailServer(unittest.TestCase):
                 # This client will be good connect
                 self._connect(client, user)
 
-    def test_b_multi_compose(self):
+    def test_d_multi_compose(self):
         for i, client in enumerate(self.clients):
             self._connect(client, self._get_user(i))
 
@@ -132,7 +132,7 @@ class TestMailServer(unittest.TestCase):
 
             self.assertEqual(self._recv(client), COMPOSE_REPONSE)
 
-    def test_c_multi_show_inbox(self):
+    def test_e_multi_show_inbox(self):
         for i, client in enumerate(self.clients):
             sender_index = len(self.clients) - i - 1
             expected_mail1 = '1 %s "Funny pictures"' % self._get_user(sender_index)[0]
@@ -151,6 +151,33 @@ class TestMailServer(unittest.TestCase):
                     break
 
             self.assertEqual(res, ("%s\n%s\n" % (expected_mail1, expected_mail2)).encode())
+
+    def test_f_check_show_online_command(self):
+        for i, client in enumerate(self.clients):
+            self._connect(client, self._get_user(i))
+
+        client = self.clients[0]
+
+        self._send(SHOW_ONLINE_USERS_CMD, client)
+        res = self._recv(client)
+
+        self.assertEquals(res, (ONLINE_USERS_RESPONSE_FORMAT % ",".join([self._get_user(i)[0]
+                                                                         for i in range(len(self.clients))])).encode())
+
+    def test_g_check_msg_command(self):
+        for i, client in enumerate(self.clients):
+            self._connect(client, self._get_user(i))
+
+        client0 = self.clients[0]
+        client1 = self.clients[1]
+
+        text = "Demo message."
+
+        self._send(MSG_CMD_FORMAT % (self._get_user(1)[0], text), client0)
+        res = self._recv(client1)
+
+        self.assertEquals(res, (MSG_RESPONSE_FORMAT % (self._get_user(0)[0], text)).encode())
+
 
     # --- PRIVATE --- #
 
