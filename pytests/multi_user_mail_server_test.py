@@ -16,7 +16,7 @@ from pytests.common import USERS_FILE, CWD
 class TestMailServer(unittest.TestCase):
 
     def setUp(self):
-        self.port = 5090 + random.randint(1, 1000)
+        self.port = 3090 + random.randint(1, 1000)
 
         self.users = []
         file_path = os.path.join(CWD, "pytests", USERS_FILE)
@@ -368,7 +368,6 @@ class TestMailServer(unittest.TestCase):
             res = self._recv(client)
 
             assert res == CONNECTION_SUCCESSFUL_STR, "%s" % res
-
 
     def _send(self, cmd, client):
         return client.send(cmd)

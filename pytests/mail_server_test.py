@@ -26,7 +26,6 @@ class TestMailServer(unittest.TestCase):
                 line = l.replace('\n', '').split('\t')
                 cls.users.append((line[0], line[1]))
 
-
         cls.mail_server = Server()
         cls.mail_server.start()
 
@@ -182,6 +181,8 @@ class TestMailServer(unittest.TestCase):
 
         self._send(SHOW_INBOX_CMD)
 
+        time.sleep(1)
+
         self.assertEqual(self._recv(), expected_mail2.encode('utf-8'))
 
     def test_f_quit(self):
@@ -336,7 +337,6 @@ class TestMailServer(unittest.TestCase):
             res = self._recv()
 
             assert res == CONNECTION_SUCCESSFUL_STR, "%s" % res
-
 
     def _send(self, cmd):
         return self.client.send(cmd)
