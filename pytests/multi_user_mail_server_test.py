@@ -15,40 +15,37 @@ from pytests.common import USERS_FILE, CWD
 
 class TestMailServer(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.users = []
+    def setUp(self):
+        self.port = 5090 + random.randint(1, 1000)
+
+        self.users = []
         file_path = os.path.join(CWD, "pytests", USERS_FILE)
         with open(file_path, 'r') as fd:
             for l in fd:
                 line = l.replace('\n', '').split('\t')
-                cls.users.append((line[0], line[1]))
+                self.users.append((line[0], line[1]))
 
+        self.mail_server = Server(port=self.port)
+        self.mail_server.start()
 
-        cls.mail_server = Server()
-        cls.mail_server.start()
-
-        clients_amount = random.randint(2, len(cls.users))
-        cls.clients = []
+        clients_amount = random.randint(2, len(self.users))
+        self.clients = []
 
         for _ in range(clients_amount):
-            cls.clients.append(Client())
+            self.clients.append(Client(port=self.port))
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.mail_server.stop()
-
-    def setUp(self):
         if not self.mail_server:
             self.mail_server = Server()
 
         for i, client in enumerate(self.clients):
             if not client:
-                self.clients[i] = Client()
+                self.clients[i] = Client(port=self.port)
 
     def tearDown(self):
         for client in self.clients:
             client.stop()
+
+        self.mail_server.stop()
 
     def _get_user(self, index=0, name=None):
         if name is None:
@@ -135,11 +132,37 @@ class TestMailServer(unittest.TestCase):
 
     def test_e_multi_show_inbox(self):
         for i, client in enumerate(self.clients):
+            self._connect(client, self._get_user(i))
+
+            user1 = self._get_user(len(self.clients) - i - 1)
+            to = "To: %s\n" % user1[0]
+            subject = "Subject: Funny pictures\n"
+            text = "Text: How are you? Long time no see!\n"
+
+            self._send(COMPOSE_CMD, client)
+
+            self._send(to, client)
+            self._send(subject, client)
+            self._send(text, client)
+
+            self.assertEqual(self._recv(client), COMPOSE_REPONSE)
+
+            to = "To: %s\n" % user1[0]
+            subject = "Subject: Avengers Internship\n"
+            text = "Text: Please send your CV to the new exiting Avengers Internship! #TonyStark\n"
+
+            self._send(COMPOSE_CMD, client)
+
+            self._send(to, client)
+            self._send(subject, client)
+            self._send(text, client)
+
+            self.assertEqual(self._recv(client), COMPOSE_REPONSE)
+
+        for i, client in enumerate(self.clients):
             sender_index = len(self.clients) - i - 1
             expected_mail1 = '1 %s "Funny pictures"' % self._get_user(sender_index)[0]
             expected_mail2 = '2 %s "Avengers Internship"' % self._get_user(sender_index)[0]
-
-            self._connect(client, self._get_user(i))
 
             self._send(SHOW_INBOX_CMD, client)
 
