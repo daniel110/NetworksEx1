@@ -313,6 +313,41 @@ class TestMailServer(unittest.TestCase):
             res = self._recv(c0)
             self.assertEqual(res, (MSG_RESPONSE_FORMAT % (u1[0], msgs1[i])).encode())
 
+    def test_l_bad_msg_command(self):
+        for i, client in enumerate(self.clients):
+            self._connect(client, self._get_user(i))
+
+        client0 = self.clients[0]
+
+        text = "Demo message."
+
+        self._send("MSG %s:%s\n" % (self._get_user(1)[0], text), client0)
+        res = self._recv(client0)
+
+        self.assertEqual(res, b"Unable to extract destination user(first parameter of MSG), "
+                              b"be aware it should be end with ':' .\n")
+
+        self._send("MSG%s: %s\n" % (self._get_user(1)[0], text), client0)
+        res = self._recv(client0)
+
+        self.assertEqual(res, b"Invalid command type name\n")
+
+        self._send("MSG %s : %s\n" % (self._get_user(1)[0], text), client0)
+        res = self._recv(client0)
+
+        self.assertEqual(res, b"Unable to extract destination user(first parameter of MSG), "
+                              b"be aware it should be end with ':' .\n")
+
+    def test_m_bad_show_online_command(self):
+        for i, client in enumerate(self.clients):
+            self._connect(client, self._get_user(i))
+
+        client = self.clients[0]
+
+        self._send("SHOW_ONLINE_UZERS\n", client)
+        res = self._recv(client)
+
+        self.assertEqual(res, b"Invalid command type name\n")
 
     # --- PRIVATE --- #
 
