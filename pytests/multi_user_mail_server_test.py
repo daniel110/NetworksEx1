@@ -338,6 +338,12 @@ class TestMailServer(unittest.TestCase):
         self.assertEqual(res, b"Unable to extract destination user(first parameter of MSG), "
                               b"be aware it should be end with ':' .\n")
 
+        self._send("MSG %s %s\n" % (self._get_user(1)[0], text), client0)
+        res = self._recv(client0)
+
+        self.assertEqual(res, b"Unable to extract destination user(first parameter of MSG), "
+                              b"be aware it should be end with ':' .\n")
+
     def test_m_bad_show_online_command(self):
         for i, client in enumerate(self.clients):
             self._connect(client, self._get_user(i))
@@ -348,6 +354,21 @@ class TestMailServer(unittest.TestCase):
         res = self._recv(client)
 
         self.assertEqual(res, b"Invalid command type name\n")
+
+    def test_n_unknown_receiver(self):
+        sender = self.clients[0]
+
+        sender_user = self._get_user(0)
+
+        self._connect(sender, sender_user)
+
+        text = "Demo message."
+
+        self._send(MSG_CMD_FORMAT % ("BLAT_USER", text), sender)
+
+        res = self._recv(sender)
+
+        self.assertEqual(res, b"Failed on send chat message: User does not register in the server.\n")
 
     # --- PRIVATE --- #
 
